@@ -52,6 +52,12 @@
   .pick svg { width: 74px; height: 62px; display: block; margin: 0 auto; }
   .pick span { font-size: 15px; display: block; }
   .pick.on { border-color: var(--pink); background: #FFE3EF; }
+  .pick { position: relative; }
+  .cagebadge { position: absolute; top: 2px; right: 4px; font-style: normal; font-size: 16px; }
+  .namerow { flex-wrap: wrap; }
+  .btn.incage { font-size: 16px; }
+  .btn.incage.on { background: #D9F5EF; color: #1E7E73; font-weight: 600; }
+  .hamster.chosen .nametag { background: var(--pink); color: #fff; }
   .namerow { display: flex; align-items: center; gap: 10px; margin-top: 10px; font-size: 18px; }
   .namerow input {
     font: inherit; font-size: 19px; padding: 6px 12px; border-radius: 12px;
@@ -461,6 +467,7 @@
       <div class="namerow">
         <label for="name">Name:</label>
         <input id="name" maxlength="14" autocomplete="off" spellcheck="false">
+        <button class="btn incage" id="incage">🏠 In the cage ✓</button>
       </div>
       <div class="dress" id="dress"></div>
     </div>
@@ -486,12 +493,6 @@
         <div id="items"></div>
         <div class="preview" id="preview" hidden></div>
         <div class="sky" id="sky"><span class="moon">🌙</span></div>
-        <div class="hamster" id="ham">
-          <div class="bubble" id="bubble"></div>
-          <div class="needicon" id="needicon" hidden></div>
-          <div class="hbody"><div class="hface" id="hface"></div></div>
-          <div class="nametag" id="nametag"></div>
-        </div>
         <div class="toolbar" id="toolbar" hidden></div>
       </div>
       <p class="help" id="help"></p>
@@ -957,14 +958,21 @@
     const saved = JSON.parse(localStorage.getItem(KEY));
     if (saved && Array.isArray(saved.items)) state = Object.assign(state, saved);
   } catch (e) { /* no saving available — that's fine */ }
-  state.needs = Object.assign({ food: 80, drink: 80, sleep: 80, fun: 80 }, state.needs || {});
-  delete state.happy;
+  // Each hamster has its own needs, and state.cage lists who lives in the cage
+  state.needsBy = state.needsBy || {};
+  if (state.needs && !state.needsBy[state.ham]) state.needsBy[state.ham] = state.needs;   // from before there could be several
+  delete state.needs; delete state.happy;
+  if (!Array.isArray(state.cage) || !state.cage.length) state.cage = [state.ham];
+  function needsOf(id) {
+    state.needsBy[id] = Object.assign({ food: 80, drink: 80, sleep: 80, fun: 80 }, state.needsBy[id] || {});
+    return state.needsBy[id];
+  }
   state.items = state.items.filter(it => DEFS[it.type]);
   function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
 
   // ---------- Helpers ----------
   const $ = id => document.getElementById(id);
-  const cage = $('cage'), itemsLayer = $('items'), ham = $('ham'), hface = $('hface'), bubble = $('bubble');
+  const cage = $('cage'), itemsLayer = $('items');
   const toolbar = $('toolbar'), preview = $('preview'), ghost = $('ghost'), bin = $('bin');
   const pct = (v, n) => (v / n * 100) + '%';
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -975,7 +983,8 @@
   const hamDef = () => HAMSTERS.find(h => h.id === state.ham) || HAMSTERS[0];
   const nameOf = id => (state.names[id] || '').trim() || HAMSTERS.find(h => h.id === id).name;
 
-  let shelfCat = 'tubes', selectedShelf = null, selectedId = null, spinningId = null, paintOpen = false, heldId = null;
+  let shelfCat = 'tubes', selectedShelf = null, selectedId = null, paintOpen = false, heldId = null;
+  const spinning = new Set();   // wheels with a hamster running in them
 
   // Some things changed size, so keep older saved cages inside the walls
   for (const it of state.items) {
@@ -1009,10 +1018,25 @@
   // ---------- Hamster picker ----------
   function renderPicker() {
     $('picker').innerHTML = HAMSTERS.map(h =>
-      `<button class="pick${h.id === state.ham ? ' on' : ''}" data-id="${h.id}" aria-label="${h.label} hamster">${hamsterSVG(h, outfitOf(h.id))}<span>${h.label}</span></button>`).join('');
+      `<button class="pick${h.id === state.ham ? ' on' : ''}${state.cage.includes(h.id) ? ' incage' : ''}" data-id="${h.id}" aria-label="${h.label} hamster">` +
+      `${state.cage.includes(h.id) ? '<i class="cagebadge" title="In the cage">🏠</i>' : ''}${hamsterSVG(h, outfitOf(h.id))}<span>${h.label}</span></button>`).join('');
     $('name').value = nameOf(state.ham);
+    const inCage = state.cage.includes(state.ham);
+    $('incage').textContent = inCage ? '🏠 In the cage ✓' : '➕ Put in the cage';
+    $('incage').classList.toggle('on', inCage);
     renderDress();
   }
+  // put the chosen hamster in the cage, or take it out (there must always be at least one)
+  $('incage').addEventListener('click', () => {
+    if (state.cage.includes(state.ham)) {
+      if (state.cage.length === 1) { say("I don't want to be all alone! Add another hamster first. 🥺", 2600); return; }
+      state.cage = state.cage.filter(id => id !== state.ham);
+    } else {
+      state.cage.push(state.ham);
+    }
+    save(); syncHerd(); renderPicker(); drawHamster();
+    const h = herd.get(state.ham); if (h) h.hi();
+  });
   function renderDress() {
     $('dress').innerHTML = `<h3>Dress up ${esc(nameOf(state.ham))} 👒</h3>` + dressHTML(outfitOf(state.ham));
   }
@@ -1047,20 +1071,20 @@
   });
   $('picker').addEventListener('click', e => {
     const b = e.target.closest('.pick'); if (!b) return;
-    state.ham = b.dataset.id; save();
-    renderPicker(); drawHamster();
-    ham.classList.remove('pop'); void ham.offsetWidth; ham.classList.add('pop');
-    squeak(); say(`Hi, I'm ${nameOf(state.ham)}!`);
+    selectHamster(b.dataset.id);
   });
+  function selectHamster(id) {
+    state.ham = id; save();
+    renderPicker(); drawHamster();
+    const h = herd.get(id); if (h) h.hi();
+  }
   $('name').addEventListener('input', e => {
     state.names[state.ham] = e.target.value; save();
-    $('nametag').textContent = nameOf(state.ham);
     $('dress').querySelector('h3').textContent = `Dress up ${nameOf(state.ham)} 👒`;
-    renderNeeds();
+    drawHamster();
   });
   function drawHamster() {
-    hface.innerHTML = hamsterSVG(hamDef(), outfitOf(state.ham));
-    $('nametag').textContent = nameOf(state.ham);
+    herd.forEach(h => { h.draw(); h.el.classList.toggle('chosen', h.id === state.ham && herd.size > 1); });
     renderNeeds();
   }
 
@@ -1074,32 +1098,39 @@
   const DECAY = { food: 3, drink: 4, sleep: 2, fun: 3 };   // lost every 10 seconds
   $('needs').innerHTML = NEEDS.map(n =>
     `<div class="need" id="need-${n.k}"><span>${n.icon}</span><span>${n.label}</span><div class="meter"><i></i></div></div>`).join('');
-  function lowestNeed() {
-    return NEEDS.reduce((a, b) => state.needs[b.k] < state.needs[a.k] ? b : a);
+  function lowestOf(needs) {
+    return NEEDS.reduce((a, b) => needs[b.k] < needs[a.k] ? b : a);
   }
+  // the bars at the top show the chosen hamster; every hamster in the cage gets its own "I need…" icon
   function renderNeeds() {
+    const needs = needsOf(state.ham);
     for (const n of NEEDS) {
-      const row = $('need-' + n.k), v = state.needs[n.k];
+      const row = $('need-' + n.k), v = needs[n.k];
       row.querySelector('i').style.width = v + '%';
       row.classList.toggle('low', v < 30);
     }
-    const avg = NEEDS.reduce((s, n) => s + state.needs[n.k], 0) / NEEDS.length;
-    const low = lowestNeed(), lowV = state.needs[low.k];
+    const avg = NEEDS.reduce((s, n) => s + needs[n.k], 0) / NEEDS.length;
+    const low = lowestOf(needs), lowV = needs[low.k];
     $('hname').textContent = nameOf(state.ham);
     $('face').textContent = lowV < 20 ? '😢' : avg < 45 ? '🙂' : avg < 75 ? '😄' : '🥰';
     $('happyText').textContent = lowV < 30 ? `${low.low} ${nameOf(state.ham)} needs you!` : avg < 75 ? 'Happy!' : 'Super happy!';
-    const icon = $('needicon');
-    icon.hidden = lowV >= 30;
-    icon.textContent = low.ask;
+    herd.forEach(h => {
+      const hn = needsOf(h.id), l = lowestOf(hn);
+      h.setNeedIcon(hn[l.k] < 30 ? l.ask : '');
+    });
   }
-  function addNeed(k, n) { state.needs[k] = clamp(state.needs[k] + n, 0, 100); renderNeeds(); save(); }
+  function addNeedFor(id, k, n) { const needs = needsOf(id); needs[k] = clamp(needs[k] + n, 0, 100); renderNeeds(); save(); }
+  function addNeed(k, n) { addNeedFor(state.ham, k, n); }   // mini games reward the chosen hamster
   setInterval(() => {
-    for (const k in DECAY) {
-      if (k === 'sleep' && (ham.classList.contains('sleeping') || ham.classList.contains('inside'))) continue;
-      // hamsters get sleepy in the day and want to play at night
-      const rate = k === 'sleep' ? (state.night ? 1 : 2.5) : k === 'fun' ? (state.night ? 4 : 3) : DECAY[k];
-      state.needs[k] = clamp(state.needs[k] - rate, 0, 100);
-    }
+    herd.forEach(h => {
+      const needs = needsOf(h.id);
+      for (const k in DECAY) {
+        if (k === 'sleep' && h.resting()) continue;
+        // hamsters get sleepy in the day and want to play at night
+        const rate = k === 'sleep' ? (state.night ? 1 : 2.5) : k === 'fun' ? (state.night ? 4 : 3) : DECAY[k];
+        needs[k] = clamp(needs[k] - rate, 0, 100);
+      }
+    });
     renderNeeds(); save();
   }, 10000);
 
@@ -1159,7 +1190,7 @@
     for (const it of state.items) {
       const [w, h] = sizeOfType(it.type);
       const el = document.createElement('div');
-      el.className = 'item' + (it.id === selectedId ? ' sel' : '') + (it.id === spinningId ? ' spin' : '') + (it.id === heldId ? ' held' : '') +
+      el.className = 'item' + (it.id === selectedId ? ' sel' : '') + (spinning.has(it.id) ? ' spin' : '') + (it.id === heldId ? ' held' : '') +
         (DEFS[it.type].refill && fillOf(it) <= 0.02 ? ' empty' : '');
       el.dataset.id = it.id;
       Object.assign(el.style, { left: pct(it.c, COLS), top: pct(it.r, ROWS), width: pct(w, COLS), height: pct(h, ROWS) });
@@ -1224,10 +1255,12 @@
     it.fill = 1; save(); pop();
     renderItems();
     const d = DEFS[it.type];
-    say(d.refill === 'food' ? 'Ooh, food! Thank you! 💖' : 'Fresh water! Thank you! 💖');
-    hearts(2);
-    // a hungry or thirsty hamster comes straight over
-    if (state.needs[d.refill] < 60) goBeside(it, () => (d.refill === 'food' ? eatBowl : drinkWater)(it.id));
+    // the hungriest (or thirstiest) hamster says thank you, and comes straight over if it needs it
+    const h = [...herd.values()].sort((a, b) => needsOf(a.id)[d.refill] - needsOf(b.id)[d.refill])[0];
+    if (!h) return;
+    if (needsOf(h.id)[d.refill] < 60) h.commandTo(it);
+    h.say(d.refill === 'food' ? 'Ooh, food! Thank you! 💖' : 'Fresh water! Thank you! 💖');
+    h.hearts(2);
   }
 
   // ---------- Drag and tap ----------
@@ -1337,7 +1370,7 @@
       if (wasHeld) { selectedId = it.id; paintOpen = false; renderItems(); return; }   // show paint / turn / bin
       selectedId = null; renderItems();
       if (DEFS[it.type].refill && fillOf(it) <= 0.02) { refill(it); return; }   // empty bowl or bottle: fill it
-      commandTo(it);
+      const h = current(); if (h) h.commandTo(it);   // the chosen hamster goes
       return;
     }
     justDragged = true; setTimeout(() => { justDragged = false; }, 80);
@@ -1358,7 +1391,14 @@
   cage.addEventListener('click', e => {
     if (justDragged) return;
     if (e.target.closest('.toolbar')) return;
-    if (e.target.closest('.hamster')) { tickle(); return; }
+    const hamEl = e.target.closest('.hamster');
+    if (hamEl) {
+      // tapping a hamster picks it (so taps on things send this one) and gives it a tickle
+      const h = herd.get(hamEl.dataset.id);
+      if (h && state.ham !== h.id) { state.ham = h.id; save(); renderPicker(); drawHamster(); }
+      if (h) h.tickle();
+      return;
+    }
     if (selectedShelf) {
       const [w, h] = sizeOfType(selectedShelf), cell = cellAt(e.clientX, e.clientY, w, h);
       if (cell) addItem(selectedShelf, cell);
@@ -1407,10 +1447,25 @@
   // day lasts 3 minutes and night 2 minutes, then it changes by itself
   setInterval(() => { cycleSecs += 10; if (cycleSecs >= (state.night ? 120 : 180)) setNight(!state.night, true); }, 10000);
 
-  // ---------- The hamster comes alive ----------
-  let hx = 5.2, hy = 3.3, actTimer = null, bubbleTimer = null;
+  // ---------- The hamsters come alive ----------
+  // Each hamster in the cage is made by makeHamster: its own picture, position, timers and needs.
+  function makeHamster(id) {
+  const ham = document.createElement('div');
+  ham.className = 'hamster'; ham.dataset.id = id;
+  ham.innerHTML = '<div class="bubble"></div><div class="needicon" hidden></div><div class="hbody"><div class="hface"></div></div><div class="nametag"></div>';
+  cage.insertBefore(ham, toolbar);
+  const hface = ham.querySelector('.hface'), bubble = ham.querySelector('.bubble');
+  let hx = rand(1, COLS - HW - 1), hy = rand(1, ROWS - HH - 1), actTimer = null, bubbleTimer = null, myWheel = null;
   ham.style.width = pct(HW, COLS);
   ham.style.height = pct(HH, ROWS);
+  // this hamster's own needs
+  const N = () => needsOf(id);
+  const addNeed = (k, n) => addNeedFor(id, k, n);
+  const lowestNeed = () => lowestOf(N());
+  function draw() {
+    hface.innerHTML = hamsterSVG(HAMSTERS.find(h => h.id === id), outfitOf(id));
+    ham.querySelector('.nametag').textContent = nameOf(id);
+  }
 
   function placeHam(x, y, dur) {
     ham.style.transition = dur ? `left ${dur}s linear, top ${dur}s linear` : 'none';
@@ -1443,7 +1498,10 @@
   }
 
   const face = left => hface.classList.toggle('flip', left);
-  const resetMood = () => ham.classList.remove('walking', 'running', 'sleeping', 'inside', 'intube');
+  const resetMood = () => {
+    ham.classList.remove('walking', 'running', 'sleeping', 'inside', 'intube');
+    if (myWheel) { spinning.delete(myWheel); myWheel = null; renderItems(); }
+  };
   function schedule(ms) { clearTimeout(actTimer); actTimer = setTimeout(nextAction, ms); }
 
   function go(tx, ty, then) {
@@ -1495,7 +1553,6 @@
   function commandTo(it) {
     const d = DEFS[it.type];
     clearTimeout(actTimer); resetMood();
-    if (spinningId) { spinningId = null; renderItems(); }
     squeak(); say(pickRand(['Okay!', 'On my way!', 'Coming!', 'Yes please!']), 1100);
     if (d.snack) return goBeside(it, () => eat(it.id));
     if (d.refill === 'food') return goBeside(it, () => eatBowl(it.id));
@@ -1529,7 +1586,7 @@
   function nextAction() {
     resetMood();
     // Look after the most important need first
-    const need = lowestNeed(), v = state.needs[need.k];
+    const need = lowestNeed(), v = N()[need.k];
     if (v < 40) { if (!tryNeed(need.k)) askFor(need.k); return; }
     if (v < 75 && Math.random() < 0.5 && tryNeed(need.k)) return;
 
@@ -1539,7 +1596,7 @@
     const night = !!state.night;
     // Each choice has a weight: bigger = more likely
     const choices = [];
-    if (snacks.length && state.needs.food < 92) choices.push([4, () => { const s = pickRand(snacks); goBeside(s, () => eat(s.id)); }]);
+    if (snacks.length && N().food < 92) choices.push([4, () => { const s = pickRand(snacks); goBeside(s, () => eat(s.id)); }]);
     if (wheels.length) choices.push([night ? 6 : 2, () => { const w = pickRand(wheels); goOnto(w, () => runWheel(w.id)); }]);
     if (tubePath) choices.push([night ? 6 : 3, () => runTubes(tubePath)]);
     if (hides.length) choices.push([night ? 0.5 : 1.5, () => { const h = pickRand(hides); goOnto(h, hide); }]);
@@ -1648,12 +1705,10 @@
   }
   function runWheel(id) {
     if (!findItem(id)) { schedule(600); return; }
-    spinningId = id; renderItems();
+    myWheel = id; spinning.add(id); renderItems();
     ham.classList.add('running'); say('Wheee! 🎡'); addNeed('fun', 25); addNeed('sleep', -4);
     clearTimeout(actTimer);
-    actTimer = setTimeout(() => {
-      spinningId = null; renderItems(); ham.classList.remove('running'); schedule(900);
-    }, 3200);
+    actTimer = setTimeout(() => { resetMood(); schedule(900); }, 3200);
   }
   function nap() {
     ham.classList.add('sleeping'); say('Zzz… 💤', 3200); addNeed('sleep', 45);
@@ -1671,6 +1726,30 @@
     ham.classList.add('hop'); setTimeout(() => ham.classList.remove('hop'), 600);
     schedule(1500);
   }
+
+  draw();
+  placeHam(hx, hy, 0);
+  return {
+    id, el: ham, say, hearts, tickle, commandTo, draw,
+    start() { schedule(1500 + Math.random() * 1500); },
+    stop() { clearTimeout(actTimer); clearTimeout(bubbleTimer); resetMood(); ham.remove(); },
+    resting: () => ham.classList.contains('sleeping') || ham.classList.contains('inside'),
+    setNeedIcon(icon) { const n = ham.querySelector('.needicon'); n.hidden = !icon; n.textContent = icon || ''; },
+    hi() { ham.classList.remove('pop'); void ham.offsetWidth; ham.classList.add('pop'); squeak(); say(`Hi, I'm ${nameOf(id)}!`); },
+  };
+  }   // end of makeHamster
+
+  // The hamsters in the cage, and which one Belle is looking after right now
+  const herd = new Map();
+  const current = () => herd.get(state.ham) || herd.values().next().value;
+  function syncHerd() {
+    for (const id of state.cage) if (!herd.has(id)) { const h = makeHamster(id); herd.set(id, h); h.start(); }
+    for (const [id, h] of herd) if (!state.cage.includes(id)) { h.stop(); herd.delete(id); }
+    renderNeeds();
+  }
+  // things outside the cage talk through the chosen hamster
+  function say(text, ms) { const h = current(); if (h) h.say(text, ms); }
+  function hearts(n) { const h = current(); if (h) h.hearts(n); }
 
   // ---------- Mini games ----------
   const modal = $('game'), gbody = $('gameBody');
@@ -2319,11 +2398,10 @@
     `<button class="game" data-game="${id}"><div class="big">${icon}</div><div><b>${name}</b>${desc}<br><span class="soon">▶ Play</span></div></button>`).join('');
 
   // ---------- Start ----------
-  renderPicker(); drawHamster(); renderNeeds(); renderShelf(); renderItems(); updateHelp(); renderSound();
+  syncHerd();
+  renderPicker(); drawHamster(); renderShelf(); renderItems(); updateHelp(); renderSound();
   setNight(!!state.night, false);
-  placeHam(hx, hy, 0);
-  setTimeout(() => say(`Hi, I'm ${nameOf(state.ham)}!`), 600);
-  schedule(2200);
+  herd.forEach(h => setTimeout(() => h.say(`Hi, I'm ${nameOf(h.id)}!`), 600 + Math.random() * 900));
 })();
 </script>
 </body>
