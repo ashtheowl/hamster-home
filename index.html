@@ -406,7 +406,96 @@
   @media (max-width: 860px) {
     .top { grid-template-columns: 1fr; }
     .build { grid-template-columns: 1fr; }
-    .cage-card { order: -1; }
+  }
+
+  /* ===== Page layout: cage on the left, a tabbed panel on the right ===== */
+  .topbar { max-width: 1400px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 10px 16px; flex-wrap: wrap;
+    padding-block: 12px 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .brand { display: flex; align-items: center; gap: 10px; min-width: 0; text-align: left; }
+  .brand .logo { font-size: clamp(34px, 5vw, 46px); line-height: 1; filter: drop-shadow(0 3px 0 rgba(224, 85, 143, .25)); }
+  .brand h1 { text-align: left; font-size: clamp(22px, 3.2vw, 34px); line-height: 1.05; letter-spacing: -.01em; }
+  .brand .sub { margin: 2px 0 0; font-size: clamp(13px, 1.6vw, 16px); }
+  .topactions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .topactions .coinpill { margin: 0; font-size: 19px; padding: 6px 16px; }
+  .tbtn { font: inherit; font-size: 15px; font-weight: 600; color: var(--ink); border: none; border-radius: 999px; padding: 8px 14px;
+    background: var(--card); box-shadow: 0 3px 0 var(--line); cursor: pointer; transition: transform .12s; }
+  .tbtn:hover { background: #FFE3EF; }
+  .tbtn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--line); }
+  .pausebtn { background: var(--pink); color: #fff; box-shadow: 0 3px 0 var(--pink-d); }
+  .pausebtn:hover { background: var(--pink-d); }
+  body.night .tbtn { box-shadow: 0 3px 0 rgba(0, 0, 0, .25); }
+  body.night .brand .sub { color: #D8D0F5; }
+
+  .layout { max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(330px, 1fr); gap: 16px; align-items: start;
+    padding-block: 2px 32px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .stage { min-width: 0; }
+  .cage-card { padding: 12px; }
+  .status { display: grid; grid-template-columns: 1fr; gap: 8px; align-items: center; margin-top: 10px; padding: 0 4px; }
+  .moodtext { display: flex; align-items: baseline; gap: 4px 10px; flex-wrap: wrap; }
+  .mood { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .mood .face { font-size: 42px; line-height: 1; }
+  .moodtext { min-width: 0; }
+  .moodtext b { display: block; font-size: 19px; }
+  .moodtext #happyText { display: block; margin: 0; font-size: 14px; color: var(--soft); font-weight: 500; }
+  .status .needs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px 10px; margin: 0; }
+  .status .need { display: grid; grid-template-columns: auto 1fr; column-gap: 4px; row-gap: 3px; align-items: center; font-size: 13px; }
+  .status .need .meter { grid-column: 1 / -1; height: 12px; }
+  .stagefoot { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+  .stagefoot .help { flex: 1; margin: 0; min-height: 0; font-size: 14px; color: var(--soft); line-height: 1.4; }
+  .stagefoot .bin { flex: none; margin: 0; padding: 8px 14px; font-size: 13px; line-height: 1.25; background: var(--card); }
+  body.night .stagefoot .help { color: #D8D0F5; }
+
+  .panel { position: sticky; top: calc(10px + env(safe-area-inset-top, 0px)); max-height: calc(100vh - 20px); overflow-y: auto; padding-top: 0; min-width: 0; }
+  .ptabs { position: sticky; top: 0; z-index: 3; background: var(--card); display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
+    padding: 12px 0 10px; margin-bottom: 10px; border-bottom: 2px dashed var(--line); }
+  .ptabs button { font: inherit; font-size: 14px; font-weight: 600; color: var(--ink); border: none; background: #FFF1E2; border-radius: 14px;
+    padding: 7px 4px 6px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 1px; transition: background .15s; }
+  .ptabs button span { font-size: 22px; line-height: 1.1; }
+  .ptabs button:hover { background: #FFE3EF; }
+  .ptabs button.on { background: var(--pink); color: #fff; box-shadow: 0 3px 0 var(--pink-d); }
+  .pane h2 { margin: 0 0 6px; }
+  .panehead { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+  .panehead h2 { margin: 0; }
+  .panefoot { margin-top: 14px; padding-top: 10px; border-top: 2px dashed var(--line); text-align: center; }
+  .pane .small { margin: 0 0 10px; }
+  .panel .picker { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); overflow: visible; gap: 8px; }
+  .panel .pick { width: auto; }
+  .panel .namerow { margin-top: 14px; }
+  .panel .dress { margin-top: 0; border-top: none; padding-top: 0; }
+  .dresspreview { width: 150px; margin: 0 auto 6px; }
+  .dresspreview svg { width: 100%; height: auto; display: block; }
+  .dress h3 { text-align: center; }
+  .dslots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 8px 0 4px; }
+  .dslot { font: inherit; font-size: 13px; font-weight: 600; color: var(--ink); border: 2px solid var(--line); background: #FFF8F0; border-radius: 12px;
+    padding: 5px 2px; cursor: pointer; display: flex; flex-direction: column; align-items: center; }
+  .dslot span { font-size: 20px; }
+  .dslot.on { border-color: var(--teal); background: #D9F5EF; color: #1E7E73; }
+  .dress .slot > b { display: none; }   /* the tab above already says which part this is */
+  .dress .slot.cols > b { display: inline; width: auto; }
+  #fsPick .slot > b { display: inline; }
+  .slot { padding: 6px 0; border-bottom: 1px solid #F6E9DC; }
+  .slot.cols { border-bottom: none; padding-top: 0; }
+  .slot b { width: 64px; flex: none; }
+  .panel .games { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+  .panel .game { flex-direction: column; text-align: center; gap: 4px; padding: 12px 8px; }
+  .panel .game .big { font-size: 36px; line-height: 1; }
+  .panel .game b { font-size: 16px; }
+  .panel .game > div:last-child { font-size: 13px; color: var(--soft); }
+  .tiles { grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    .panel { position: static; max-height: none; overflow: visible; }
+    .ptabs { top: env(safe-area-inset-top, 0px); }
+  }
+  @media (max-width: 640px) {
+    .status { grid-template-columns: 1fr; }
+    .status .needs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .stagefoot { flex-direction: column; align-items: stretch; }
+    .stagefoot .bin br { display: none; }
+    .topactions { width: 100%; justify-content: space-between; }
+    .tbtn { padding: 8px 11px; font-size: 14px; }
+    .ptabs button { font-size: 12px; }
   }
 </style>
 <!-- Shared textures (wood, straw, fabric…) used by the cage pictures -->
@@ -491,41 +580,22 @@
   </defs>
 </svg>
 
-<header>
-  <h1>🐹 Belle's Hamster Home</h1>
-  <p class="sub">Build a cage, choose your hamster and watch it play!</p>
-  <div class="coinpill" id="coins" title="Your coins">🪙 0</div>
+<header class="topbar">
+  <div class="brand">
+    <span class="logo" aria-hidden="true">🐹</span>
+    <div><h1>Belle's Hamster Home</h1><p class="sub">Build a cage, look after your hamsters and play!</p></div>
+  </div>
+  <div class="topactions">
+    <div class="coinpill" id="coins" title="Your coins">🪙 0</div>
+    <button class="tbtn" id="daynight">🌙 Night</button>
+    <button class="tbtn" id="sound">🔊 Sound</button>
+    <button class="tbtn pausebtn" id="pause">⏸️ Pause</button>
+  </div>
 </header>
 
-<div class="wrap">
-  <section class="top">
-    <div class="card">
-      <h2>Choose your hamster</h2>
-      <div class="picker" id="picker"></div>
-      <div class="namerow">
-        <label for="name">Name:</label>
-        <input id="name" maxlength="14" autocomplete="off" spellcheck="false">
-        <button class="btn incage" id="incage">🏠 In the cage ✓</button>
-      </div>
-      <div class="dress" id="dress"></div>
-    </div>
-    <div class="card happy">
-      <h2>How is <span id="hname">your hamster</span>?</h2>
-      <div class="face" id="face">🙂</div>
-      <p class="small" id="happyText"></p>
-      <div class="needs" id="needs"></div>
-    </div>
-  </section>
-
-  <section class="build">
-    <div class="card shelf">
-      <h2>Pet shop shelf <span class="coinsmall" id="coins2">🪙 0</span></h2>
-      <div class="tabs" id="tabs"></div>
-      <div class="swatches" id="swatches"></div>
-      <div class="tiles" id="tiles"></div>
-      <div class="bin" id="bin">🗑️ Drag things here to throw them away</div>
-    </div>
-
+<main class="layout">
+  <!-- The cage is the star of the page, so it always comes first -->
+  <section class="stage">
     <div class="card cage-card">
       <div class="cage" id="cage">
         <div id="items"></div>
@@ -535,21 +605,56 @@
         <div class="toolbar" id="toolbar" hidden></div>
         <button class="pauseveil" id="pauseveil" hidden><span class="pv-big">⏸️</span><span id="pauseText">Paused</span><span class="pv-small">Tap to carry on playing ▶️</span></button>
       </div>
-      <p class="help" id="help"></p>
-      <div class="cage-actions">
-        <button class="btn" id="clear">🧹 Empty the cage</button>
-        <button class="btn" id="sound">🔊 Sound on</button>
-        <button class="btn" id="daynight">🌙 Make it night</button>
-        <button class="btn big" id="pause">⏸️ Pause</button>
+      <div class="status">
+        <div class="mood"><span class="face" id="face">🙂</span><div class="moodtext"><b id="hname">Your hamster</b><span id="happyText"></span></div></div>
+        <div class="needs" id="needs"></div>
       </div>
+    </div>
+    <div class="stagefoot">
+      <p class="help" id="help"></p>
+      <div class="bin" id="bin">🗑️ Drop here to <br>throw away</div>
     </div>
   </section>
 
-  <section class="card games-card">
-    <h2>Mini games <span class="coinhint">· play to earn 🪙 coins for the shop!</span></h2>
-    <div class="games" id="games"></div>
-  </section>
-</div>
+  <!-- Everything else lives in one panel with tabs -->
+  <aside class="card panel" id="panel">
+    <nav class="ptabs" id="ptabs" aria-label="Sections">
+      <button data-pane="shop" class="on"><span>🛍️</span>Shop</button>
+      <button data-pane="hams"><span>🐹</span>Hamsters</button>
+      <button data-pane="dress"><span>👗</span>Dress up</button>
+      <button data-pane="games"><span>🎮</span>Games</button>
+    </nav>
+
+    <div class="pane" id="pane-shop">
+      <div class="panehead"><h2>Pet shop shelf</h2><span class="coinsmall" id="coins2">🪙 0</span></div>
+      <div class="tabs" id="tabs"></div>
+      <div class="swatches" id="swatches"></div>
+      <div class="tiles" id="tiles"></div>
+      <div class="panefoot"><button class="btn" id="clear">🧹 Empty the cage</button></div>
+    </div>
+
+    <div class="pane" id="pane-hams" hidden>
+      <h2>Your hamsters</h2>
+      <p class="small">Tap a hamster to choose it. Put as many in the cage as you like! 🏠 means it's in the cage.</p>
+      <div class="picker" id="picker"></div>
+      <div class="namerow">
+        <label for="name">Name:</label>
+        <input id="name" maxlength="14" autocomplete="off" spellcheck="false">
+        <button class="btn incage" id="incage">🏠 In the cage ✓</button>
+      </div>
+    </div>
+
+    <div class="pane" id="pane-dress" hidden>
+      <div class="dress" id="dress"></div>
+    </div>
+
+    <div class="pane" id="pane-games" hidden>
+      <div class="panehead"><h2>Mini games</h2><span class="coinsmall">earn 🪙</span></div>
+      <p class="small">Every game earns coins to spend in the shop!</p>
+      <div class="games" id="games"></div>
+    </div>
+  </aside>
+</main>
 
 <div class="modal" id="game" hidden>
   <div class="modal-card" id="gameCard">
@@ -1360,17 +1465,33 @@
     save(); syncHerd(); renderPicker(); drawHamster();
     const h = herd.get(state.ham); if (h) h.hi();
   });
+  // Dress up shows one part of the body at a time (hats, glasses, neck or back)
+  let dressSlot = 'head';
+  const SLOT_ICONS = { head: '🎩', face: '👓', neck: '🧣', back: '🧚' };
   function renderDress() {
-    $('dress').innerHTML = `<h3>Dress up ${esc(nameOf(state.ham))} 👒</h3>` + dressHTML(outfitOf(state.ham));
+    const mine = outfitOf(state.ham);
+    $('dress').innerHTML = `<div class="dresspreview">${hamsterSVG(hamDef(), mine)}</div>` +
+      `<h3>Dress up ${esc(nameOf(state.ham))} 👒</h3>` +
+      `<div class="dslots">${Object.entries(ACCESSORIES).map(([slot, g]) =>
+        `<button class="dslot${slot === dressSlot ? ' on' : ''}" data-dslot="${slot}"><span>${SLOT_ICONS[slot]}</span>${g.label}${mine[slot] ? ' ✓' : ''}</button>`).join('')}</div>` +
+      dressHTML(mine, dressSlot);
   }
+  // the tabs on the side panel: Shop, Hamsters, Dress up, Games
+  function showPane(name) {
+    document.querySelectorAll('#ptabs button').forEach(b => b.classList.toggle('on', b.dataset.pane === name));
+    document.querySelectorAll('.pane').forEach(p => { p.hidden = p.id !== 'pane-' + name; });
+    $('panel').scrollTop = 0;
+    try { localStorage.setItem(KEY + '-pane', name); } catch (e) {}
+  }
+  $('ptabs').addEventListener('click', e => { const b = e.target.closest('button[data-pane]'); if (b) showPane(b.dataset.pane); });
   // a tap on a dress-up button or colour dot, applied to outfit o
   function applyDress(o, b) {
     const slot = b.dataset.slot;
     if (b.dataset.col) o[slot + 'Col'] = b.dataset.col;
     else { o[slot] = b.dataset.acc; delete o[slot + 'Col']; }   // a new item starts in its own colour
   }
-  function dressHTML(mine) {
-    return Object.entries(ACCESSORIES).map(([slot, group]) =>
+  function dressHTML(mine, only) {
+    return Object.entries(ACCESSORIES).filter(([slot]) => !only || slot === only).map(([slot, group]) =>
       `<div class="slot"><b>${group.label}</b>` +
       `<button class="acc${!mine[slot] ? ' on' : ''}" data-slot="${slot}" data-acc="">None</button>` +
       Object.entries(group.items).map(([id, a]) =>
@@ -1417,6 +1538,8 @@
   }
 
   $('dress').addEventListener('click', e => {
+    const ds = e.target.closest('.dslot');
+    if (ds) { dressSlot = ds.dataset.dslot; renderDress(); return; }
     const b = e.target.closest('.acc, .sw'); if (!b) return;
     if (b.dataset.buy) { openBuy({ slot: b.dataset.slot, id: b.dataset.buy }); return; }
     state.outfits = state.outfits || {};
@@ -1824,7 +1947,7 @@
     clearTimeout(clearArmed); clearArmed = null; b.textContent = '🧹 Empty the cage';
     state.items = []; state.poos = []; selectedId = null; save(); renderItems(); renderPoos(); renderNeeds();
   });
-  function renderSound() { $('sound').textContent = state.sound ? '🔊 Sound on' : '🔇 Sound off'; }
+  function renderSound() { $('sound').textContent = state.sound ? '🔊 Sound' : '🔇 Muted'; }
   $('sound').addEventListener('click', () => { state.sound = !state.sound; save(); renderSound(); });
 
   // ---------- Day and night ----------
@@ -1840,7 +1963,7 @@
   function setNight(n, announce) {
     state.night = n; save(); cycleSecs = 0;
     document.body.classList.toggle('night', n);
-    $('daynight').textContent = n ? '☀️ Make it day' : '🌙 Make it night';
+    $('daynight').textContent = n ? '☀️ Day' : '🌙 Night';
     if (announce) { squeak(); say(n ? 'Ooh, night time! My favourite! 🌙' : 'Good morning! ☀️', 2600); }
   }
   $('daynight').addEventListener('click', () => setNight(!state.night, true));
@@ -2852,6 +2975,7 @@
   syncHerd();
   renderPicker(); drawHamster(); renderShelf(); renderItems(); renderPoos(); updateHelp(); renderSound(); renderCoins();
   setNight(!!state.night, false);
+  try { const p = localStorage.getItem(KEY + '-pane'); if (p && $('pane-' + p)) showPane(p); } catch (e) {}
   herd.forEach(h => setTimeout(() => h.say(`Hi, I'm ${nameOf(h.id)}!`), 600 + Math.random() * 900));
 })();
 </script>
