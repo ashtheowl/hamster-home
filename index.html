@@ -465,6 +465,19 @@
   .dresspreview { width: 150px; margin: 0 auto 6px; }
   .dresspreview svg { width: 100%; height: auto; display: block; }
   .dress h3 { text-align: center; }
+  .pickpic { display: block; transform-origin: 50% 80%; }
+  .gbadge { position: absolute; top: 2px; left: 5px; font-style: normal; font-weight: 700; font-size: 15px; }
+  .gbadge.girl { color: #E0558F; } .gbadge.boy { color: #3A93D6; }
+  .haminfo { margin-top: 12px; padding: 12px; border-radius: 16px; background: #FFF8F0; display: grid; gap: 6px; font-size: 15px; }
+  .haminfo .row { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+  .haminfo .chip { background: #fff; border-radius: 999px; padding: 2px 10px; box-shadow: 0 0 0 2px var(--line); font-weight: 600; font-size: 14px; }
+  .haminfo .chip.girl { color: #C23E7A; } .haminfo .chip.boy { color: #2A73B8; }
+  .haminfo .meter { height: 12px; margin: 0; }
+  .famtip { margin-top: 10px !important; }
+  .toast { position: fixed; top: calc(12px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); z-index: 650;
+    width: min(520px, calc(100% - 32px)); background: #fff; border-radius: 18px; padding: 12px 16px; font-size: 17px; text-align: center;
+    box-shadow: 0 10px 34px rgba(60, 30, 20, .3); border: 3px solid var(--pink); }
+  .toast.show { animation: popin .35s ease-out; }
   .dslots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 8px 0 4px; }
   .dslot { font: inherit; font-size: 13px; font-weight: 600; color: var(--ink); border: 2px solid var(--line); background: #FFF8F0; border-radius: 12px;
     padding: 5px 2px; cursor: pointer; display: flex; flex-direction: column; align-items: center; }
@@ -642,6 +655,8 @@
         <input id="name" maxlength="14" autocomplete="off" spellcheck="false">
         <button class="btn incage" id="incage">🏠 In the cage ✓</button>
       </div>
+      <div class="haminfo" id="haminfo"></div>
+      <p class="small famtip">💕 Tip: a happy girl ♀ and boy ♂ in a clean cage might have babies!</p>
     </div>
 
     <div class="pane" id="pane-dress" hidden>
@@ -665,6 +680,7 @@
 
 <div class="ghost" id="ghost" hidden></div>
 <div class="buybox" id="buybox" hidden></div>
+<div class="toast" id="toast" hidden></div>
 
 <script>
 (() => {
@@ -1408,8 +1424,22 @@
   const findItem = id => state.items.find(it => it.id === id);
   const sizeOfType = t => [DEFS[t].w || 1, DEFS[t].h || 1];
   const cellPx = () => cage.getBoundingClientRect().width / COLS;
-  const hamDef = () => HAMSTERS.find(h => h.id === state.ham) || HAMSTERS[0];
-  const nameOf = id => (state.names[id] || '').trim() || HAMSTERS.find(h => h.id === id).name;
+  // ---------- Families: girls, boys and babies ----------
+  // The six starting hamsters, plus any babies born in the cage (kept in state.kids)
+  const GENDER = { golden: 'girl', white: 'girl', patchy: 'girl', grey: 'boy', choc: 'boy', panda: 'boy' };
+  const BABY_NAMES = ['Peanut', 'Button', 'Pip', 'Bean', 'Mochi', 'Pudding', 'Toffee', 'Biscuit', 'Waffles', 'Sprout',
+    'Hazel', 'Pebble', 'Cookie', 'Bubbles', 'Muffin', 'Jellybean', 'Nugget', 'Sunny', 'Twinkle', 'Fudge', 'Popcorn', 'Clover'];
+  const GROW_SECS = 360, EXPECT_SECS = 120, MAX_IN_CAGE = 10;   // seconds of play (paused time doesn't count)
+  if (!Array.isArray(state.kids)) state.kids = [];
+  if (typeof state.playTime !== 'number') state.playTime = 0;
+  const kidOf = id => state.kids.find(k => k.id === id);
+  const lookOf = id => { const k = kidOf(id); return HAMSTERS.find(h => h.id === (k ? k.look : id)) || HAMSTERS[0]; };
+  const genderOf = id => { const k = kidOf(id); return k ? k.gender : GENDER[id]; };
+  const growth = id => { const k = kidOf(id); return k ? clamp((state.playTime - k.born) / GROW_SECS, 0, 1) : 1; };   // 0 = newborn, 1 = grown up
+  const isBaby = id => growth(id) < 1;
+  const allHamIds = () => [...HAMSTERS.map(h => h.id), ...state.kids.map(k => k.id)];
+  const hamDef = () => lookOf(state.ham);
+  const nameOf = id => (state.names[id] || '').trim() || (kidOf(id) ? kidOf(id).name : (HAMSTERS.find(h => h.id === id) || HAMSTERS[0]).name);
 
   let shelfCat = 'tubes', selectedShelf = null, selectedId = null, paintOpen = false, heldId = null;
   const spinning = new Set();   // wheels with a hamster running in them
@@ -1445,14 +1475,66 @@
 
   // ---------- Hamster picker ----------
   function renderPicker() {
-    $('picker').innerHTML = HAMSTERS.map(h =>
-      `<button class="pick${h.id === state.ham ? ' on' : ''}${state.cage.includes(h.id) ? ' incage' : ''}" data-id="${h.id}" aria-label="${h.label} hamster">` +
-      `${state.cage.includes(h.id) ? '<i class="cagebadge" title="In the cage">🏠</i>' : ''}${hamsterSVG(h, outfitOf(h.id))}<span>${h.label}</span></button>`).join('');
+    $('picker').innerHTML = allHamIds().map(id => {
+      const kid = kidOf(id), g = genderOf(id), label = kid ? nameOf(id) : lookOf(id).label;
+      return `<button class="pick${id === state.ham ? ' on' : ''}${state.cage.includes(id) ? ' incage' : ''}" data-id="${id}" aria-label="${esc(label)} hamster">` +
+        `<i class="gbadge ${g}" title="${g === 'girl' ? 'Girl' : 'Boy'}">${g === 'girl' ? '♀' : '♂'}</i>` +
+        `${state.cage.includes(id) ? '<i class="cagebadge" title="In the cage">🏠</i>' : ''}` +
+        `<span class="pickpic" style="scale:${(0.6 + 0.4 * growth(id)).toFixed(2)}">${hamsterSVG(lookOf(id), outfitOf(id))}</span>` +
+        `<span>${isBaby(id) ? '👶 ' : ''}${esc(label)}</span></button>`;
+    }).join('');
+    renderHamInfo();
     $('name').value = nameOf(state.ham);
     const inCage = state.cage.includes(state.ham);
     $('incage').textContent = inCage ? '🏠 In the cage ✓' : '➕ Put in the cage';
     $('incage').classList.toggle('on', inCage);
     renderDress();
+  }
+  // the box under the name: girl or boy, baby or grown-up, family, and finding a new home
+  function renderHamInfo() {
+    const id = state.ham, kid = kidOf(id), g = genderOf(id), name = esc(nameOf(id));
+    const exp = state.expecting;
+    let html = `<div class="row"><span class="chip ${g}">${g === 'girl' ? '♀ Girl' : '♂ Boy'}</span>` +
+      `<span class="chip">${isBaby(id) ? '👶 Baby' : '🐹 Grown up'}</span>` +
+      (exp && exp.mum === id ? `<span class="chip">🍼 Expecting babies</span>` : '') + '</div>';
+    if (kid) {
+      const mum = kidOf(kid.mum) || HAMSTERS.find(h => h.id === kid.mum) ? nameOf(kid.mum) : 'a hamster';
+      const dad = kidOf(kid.dad) || HAMSTERS.find(h => h.id === kid.dad) ? nameOf(kid.dad) : 'a hamster';
+      html += `<div>Mum: <b>${esc(mum)}</b> · Dad: <b>${esc(dad)}</b></div>`;
+      if (isBaby(id)) {
+        html += `<div>Growing up: ${Math.floor(growth(id) * 100)}%</div><div class="meter"><i style="width:${growth(id) * 100}%"></i></div>`;
+      } else {
+        html += `<div><button class="btn big" id="giveaway">🏡 Find ${name} a new home</button></div>`;
+      }
+    }
+    if (exp && exp.mum === id) {
+      const left = Math.max(0, EXPECT_SECS - (state.playTime - exp.since));
+      html += `<div>Babies with ${esc(nameOf(exp.dad))} coming soon… 💕 (about ${Math.ceil(left / 60)} minute${left > 60 ? 's' : ''} of play)</div>`;
+    }
+    $('haminfo').innerHTML = html;
+    const gb = $('giveaway'); if (gb) gb.addEventListener('click', () => askGiveAway(id));
+  }
+  // a grown-up baby can go to a loving new home; the new family says thank you with coins
+  function askGiveAway(id) {
+    const name = esc(nameOf(id)), box = $('buybox');
+    box.innerHTML = `<div class="buypic">${hamsterSVG(lookOf(id), outfitOf(id))}</div>
+      <div class="buytext"><b>Find ${name} a new home?</b><br>A kind family will look after ${name} and send you 🪙 10 to say thank you.</div>
+      <button class="btn big" id="buyYes">Yes, find a home 🏡</button><button class="btn" id="buyNo">Keep ${name}</button>`;
+    box.hidden = false;
+    $('buyNo').addEventListener('click', () => { box.hidden = true; });
+    $('buyYes').addEventListener('click', () => {
+      box.hidden = true;
+      const realName = nameOf(id);
+      state.kids = state.kids.filter(k => k.id !== id);
+      state.cage = state.cage.filter(c => c !== id);
+      if (!state.cage.length) state.cage.push('golden');
+      delete state.names[id]; delete state.needsBy[id]; if (state.outfits) delete state.outfits[id];
+      if (state.expecting && (state.expecting.mum === id || state.expecting.dad === id)) state.expecting = null;
+      state.ham = state.cage[0];
+      state.coins += 10; save();
+      syncHerd(); renderPicker(); drawHamster(); renderCoins(true);
+      toast(`💌 <b>${esc(realName)}</b> went to a lovely new home! The family sent you 🪙 10 to say thank you.`);
+    });
   }
   // put the chosen hamster in the cage, or take it out (there must always be at least one)
   $('incage').addEventListener('click', () => {
@@ -1622,8 +1704,70 @@
       needs.fun = clamp(needs.fun - state.poos.length * 0.6, 0, 100);   // a messy cage is no fun
       if (Math.random() < 0.06) h.poo();
     });
+    state.playTime += 10;
+    familyTick();
     renderNeeds(); save();
   }, 10000);
+
+  // ---------- Babies ----------
+  function toast(html, ms = 5000) {
+    const t = $('toast');
+    t.innerHTML = html; t.hidden = false;
+    t.classList.remove('show'); void t.offsetWidth; t.classList.add('show');
+    clearTimeout(toast.timer); toast.timer = setTimeout(() => { t.hidden = true; }, ms);
+  }
+  const avgNeeds = id => { const n = needsOf(id); return (n.food + n.drink + n.sleep + n.fun) / 4; };
+  // Every 10 seconds of play: babies grow, a mum-to-be gets closer, and a happy girl and boy might start a family
+  function familyTick() {
+    let grew = false;
+    for (const k of state.kids) {
+      if (growth(k.id) < 1) grew = true;
+      if (!k.grownSaid && growth(k.id) >= 1) {
+        k.grownSaid = true; grew = true;
+        toast(`🎓 <b>${esc(nameOf(k.id))}</b> is all grown up! Keep them, or find them a lovely new home in the 🐹 Hamsters tab.`);
+        const h = herd.get(k.id); if (h) h.say("I'm all grown up! 🎉", 2600);
+      }
+    }
+    if (grew) { herd.forEach(h => { if (kidOf(h.id)) h.draw(); }); renderPicker(); }
+    if (state.expecting) {
+      if (state.playTime - state.expecting.since >= EXPECT_SECS) giveBirth();
+      return;
+    }
+    if (herd.size >= MAX_IN_CAGE || state.poos.length >= 4) return;
+    if (state.playTime - (state.lastBirth || -1000) < 300) return;   // a rest between families
+    const ready = state.cage.filter(id => !isBaby(id) && avgNeeds(id) >= 55);
+    const girls = ready.filter(id => genderOf(id) === 'girl'), boys = ready.filter(id => genderOf(id) === 'boy');
+    if (!girls.length || !boys.length || Math.random() > 0.08) return;
+    const mum = pickRand(girls), dad = pickRand(boys);
+    state.expecting = { mum, dad, since: state.playTime };
+    save();
+    [mum, dad].forEach(id => { const h = herd.get(id); if (h) { h.hearts(4); h.draw(); } });
+    const hm = herd.get(mum); if (hm) hm.say(`${nameOf(dad)} and I are having babies! 🍼💕`, 3500);
+    squeak();
+    toast(`💕 <b>${esc(nameOf(mum))}</b> and <b>${esc(nameOf(dad))}</b> are going to have babies! 🍼 Keep them happy and the cage clean.`);
+    renderPicker();
+  }
+  function giveBirth() {
+    const { mum, dad } = state.expecting;
+    state.expecting = null; state.lastBirth = state.playTime;
+    const space = MAX_IN_CAGE - state.cage.length;
+    const count = Math.max(1, Math.min(space, 1 + Math.floor(Math.random() * 3)));
+    const used = new Set(allHamIds().map(nameOf));
+    const names = [];
+    for (let i = 0; i < count; i++) {
+      const free = BABY_NAMES.filter(n => !used.has(n));
+      const name = free.length ? pickRand(free) : 'Baby ' + (state.kids.length + 1);
+      used.add(name); names.push(name);
+      const id = 'kid' + state.nextId++;
+      state.kids.push({ id, name, look: pickRand([lookOf(mum).id, lookOf(dad).id]), gender: Math.random() < 0.5 ? 'girl' : 'boy', born: state.playTime, mum, dad });
+      state.cage.push(id);
+    }
+    save(); syncHerd(); renderPicker(); drawHamster();
+    beep(800, 1400, 0.15, 0.1); setTimeout(() => beep(1000, 1800, 0.15, 0.1), 180); setTimeout(squeak, 400);
+    herd.forEach(h => { if (names.includes(nameOf(h.id))) { h.hearts(2); h.say('Squeak! 👶', 2500); } });
+    const list = names.length > 1 ? names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1] : names[0];
+    toast(`🎉 <b>${esc(nameOf(mum))}</b> had ${count === 1 ? 'a baby' : count + ' babies'}! Say hello to <b>${esc(list)}</b>! 👶`, 6500);
+  }
 
   // ---------- Shelf ----------
   function renderShelf() {
@@ -2006,8 +2150,10 @@
   const addNeed = (k, n) => addNeedFor(id, k, n);
   const lowestNeed = () => lowestOf(N());
   function draw() {
-    hface.innerHTML = hamsterSVG(HAMSTERS.find(h => h.id === id), outfitOf(id));
-    ham.querySelector('.nametag').textContent = nameOf(id);
+    hface.innerHTML = hamsterSVG(lookOf(id), outfitOf(id));
+    hface.style.scale = (0.55 + 0.45 * growth(id)).toFixed(2);   // babies start small and grow
+    const expecting = state.expecting && state.expecting.mum === id;
+    ham.querySelector('.nametag').textContent = (isBaby(id) ? '👶 ' : '') + nameOf(id) + (expecting ? ' 🍼' : '');
   }
 
   function placeHam(x, y, dur) {
