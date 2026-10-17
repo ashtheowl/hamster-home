@@ -154,6 +154,9 @@
   .sw.orig, .toolbar .sw.orig:hover { background: conic-gradient(#F0645A, #F4CF3A, #62C46A, #4E95EE, #9B6CF0, #F0645A); }
   .item.sel { outline: 3px dashed var(--teal); outline-offset: 1px; border-radius: 6px; z-index: 3; }
   .item.lifted { opacity: .25; }
+  .poo { position: absolute; z-index: 4; transform: translate(-50%, -50%); font-size: calc(var(--cell) * .52); line-height: 1; padding: 4px;
+    cursor: pointer; animation: popin .3s ease-out; filter: drop-shadow(0 2px 1px rgba(90, 55, 20, .35)); }
+  .poo:hover { transform: translate(-50%, -50%) scale(1.2); }
   .item.held { z-index: 6; animation: wiggle .18s ease-in-out infinite alternate; cursor: grabbing; }
   @keyframes wiggle { from { transform: scale(1.1) rotate(-4deg); } to { transform: scale(1.1) rotate(4deg); } }
   .item.new { animation: popin .35s ease-out; }
@@ -421,6 +424,13 @@
       <rect width="10" height="10" fill="#7A4A26"/>
       <path d="M1 2 Q3 4 2 7 M6 1 Q8 3 7 6 M4 6 Q6 8 5 10" stroke="#A8703F" stroke-width="1" fill="none"/>
     </pattern>
+    <pattern id="stone" width="16" height="10" patternUnits="userSpaceOnUse">
+      <rect width="16" height="10" fill="#D5CFE0"/>
+      <path d="M0 5 H16 M0 10 H16 M8 0 V5 M0 5 V10 M16 5 V10" stroke="#A9A0BC" stroke-width="1"/>
+    </pattern>
+    <pattern id="tentStripes" width="16" height="16" patternUnits="userSpaceOnUse">
+      <rect width="16" height="16" fill="#FFF6EC"/><rect width="8" height="16" fill="#F0645A"/>
+    </pattern>
     <linearGradient id="woodG" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#E2AB72"/><stop offset="1" stop-color="#A86A35"/>
     </linearGradient>
@@ -491,6 +501,7 @@
     <div class="card cage-card">
       <div class="cage" id="cage">
         <div id="items"></div>
+        <div id="poos"></div>
         <div class="preview" id="preview" hidden></div>
         <div class="sky" id="sky"><span class="moon">🌙</span></div>
         <div class="toolbar" id="toolbar" hidden></div>
@@ -559,12 +570,20 @@
     chew:     { cat: 'toys', label: 'Chew sticks', art: 'chew', say: ['Chomp chomp!', 'Crunchy!'] },
     teddy:    { cat: 'toys', label: 'Teddy', emoji: '🧸', say: ['Cuddles!', 'My best friend!'] },
     yarn:     { cat: 'toys', label: 'Wool ball', emoji: '🧶', say: ['So fluffy!', 'Wiggle wiggle!'] },
+    trampoline: { cat: 'toys', label: 'Trampoline', w: 2, h: 1, art: 'trampoline', on: true, say: ['Boing! Boing!', 'Higher! Higher!'] },
+    swing:    { cat: 'toys', label: 'Swing', w: 2, h: 2, art: 'swing', on: true, say: ['Wheee, swinging!', 'Push me higher!'] },
+    digbox:   { cat: 'toys', label: 'Digging box', w: 2, h: 1, art: 'digbox', on: true, say: ['Dig dig dig!', 'I found a seed!'] },
+    rocket:   { cat: 'toys', label: 'Toy rocket', emoji: '🚀', say: ['To the moon!', 'Zoom!'] },
     house:    { cat: 'homes', label: 'Wooden house', w: 2, h: 2, art: 'house', inside: true },
     hut:      { cat: 'homes', label: 'Straw hut', w: 2, h: 2, art: 'hut', inside: true },
     coconut:  { cat: 'homes', label: 'Coconut', w: 2, h: 2, art: 'coconut', inside: true },
     bed:      { cat: 'homes', label: 'Bed', w: 2, h: 1, art: 'bed', sleep: true },
     hammock:  { cat: 'homes', label: 'Hammock', w: 2, h: 1, art: 'hammock', sleep: true },
     cushion:  { cat: 'homes', label: 'Cushion', w: 2, h: 1, art: 'cushion', sleep: true },
+    castle:   { cat: 'homes', label: 'Castle', w: 2, h: 2, art: 'castle', inside: true },
+    tent:     { cat: 'homes', label: 'Tent', w: 2, h: 2, art: 'tent', inside: true },
+    igloo:    { cat: 'homes', label: 'Igloo', w: 2, h: 2, art: 'igloo', inside: true },
+    sofa:     { cat: 'homes', label: 'Sofa', w: 2, h: 1, art: 'sofa', sleep: true },
     bowl:     { cat: 'furniture', label: 'Food bowl', art: 'bowl', refill: 'food' },
     water:    { cat: 'furniture', label: 'Water bottle', art: 'water', refill: 'drink' },
     plant:    { cat: 'furniture', label: 'Grass pot', art: 'plant', say: ['Nom nom, grass!'] },
@@ -573,6 +592,11 @@
     bridge:   { cat: 'furniture', label: 'Bridge', w: 2, h: 1, art: 'bridge', on: true, say: ['Look at me!', 'Over the bridge!'] },
     platform: { cat: 'furniture', label: 'Platform', w: 2, h: 1, art: 'platform', on: true, say: ['I can see everything!'] },
     ladder:   { cat: 'furniture', label: 'Ladder', w: 1, h: 2, art: 'ladder', on: true, say: ['Climbing up!'] },
+    rug:      { cat: 'furniture', label: 'Rug', w: 2, h: 1, art: 'rug', on: true, flat: true, say: ['So soft!', 'Cosy toes!'] },
+    table:    { cat: 'furniture', label: 'Table', w: 2, h: 1, art: 'table', say: ['Tea time! ☕'] },
+    chair:    { cat: 'furniture', label: 'Chair', art: 'chair', say: ['A seat just my size!'] },
+    lamp:     { cat: 'furniture', label: 'Lamp', art: 'lamp', say: ['Ooh, a light!'] },
+    shelf:    { cat: 'furniture', label: 'Bookshelf', w: 1, h: 2, art: 'bookshelf', say: ['So many books!', 'Reading time!'] },
     carrot:   { cat: 'snacks', label: 'Carrot', emoji: '🥕', snack: true },
     apple:    { cat: 'snacks', label: 'Apple', emoji: '🍎', snack: true },
     broccoli: { cat: 'snacks', label: 'Broccoli', emoji: '🥦', snack: true },
@@ -580,6 +604,10 @@
     berry:    { cat: 'snacks', label: 'Strawberry', emoji: '🍓', snack: true },
     blue:     { cat: 'snacks', label: 'Blueberries', emoji: '🫐', snack: true },
     cucumber: { cat: 'snacks', label: 'Cucumber', emoji: '🥒', snack: true },
+    corn:     { cat: 'snacks', label: 'Sweetcorn', emoji: '🌽', snack: true },
+    banana:   { cat: 'snacks', label: 'Banana', emoji: '🍌', snack: true },
+    pear:     { cat: 'snacks', label: 'Pear', emoji: '🍐', snack: true },
+    pepper:   { cat: 'snacks', label: 'Sweet pepper', emoji: '🫑', snack: true },
   };
 
   const WHEEL = `<svg viewBox="0 0 100 100">
@@ -741,6 +769,96 @@
       <polygon points="8,46 178,46 178,62 8,62" fill="url(#woodG)"/>
       <polygon points="178,46 194,26 194,42 178,62" fill="#8C5A2E"/>
     </g></svg>`,
+    castle: `<svg viewBox="0 0 100 100"><g ${S}>
+      <rect x="18" y="44" width="64" height="50" fill="url(#stone)"/>
+      <path d="M18 44 V36 H26 V44 M34 44 V36 H42 V44 M58 44 V36 H66 V44 M74 44 V36 H82 V44" fill="url(#stone)"/>
+      <rect x="6" y="30" width="20" height="64" fill="url(#stone)"/><rect x="74" y="30" width="20" height="64" fill="url(#stone)"/>
+      <polygon points="4,30 16,8 28,30" fill="#FF7EB3"/><polygon points="72,30 84,8 96,30" fill="#FF7EB3"/>
+      <rect x="12" y="44" width="8" height="12" rx="4" fill="#3A2E55"/><rect x="80" y="44" width="8" height="12" rx="4" fill="#3A2E55"/>
+      <path d="M38 94 V74 Q50 60 62 74 V94 Z" fill="#6B4A2A"/><path d="M50 62 V70" stroke-width="1.2"/>
+      <path d="M50 36 V18" stroke-width="1.5"/><polygon points="50,18 62,22 50,26" fill="#FFD166"/>
+      <rect x="18" y="44" width="64" height="50" fill="url(#shadeB)" stroke="none"/>
+    </g></svg>`,
+    tent: `<svg viewBox="0 0 100 100"><g ${S}>
+      <polygon points="6,92 50,14 94,92" fill="url(#tentStripes)"/>
+      <polygon points="6,92 50,14 94,92" fill="url(#shadeB)" stroke="none"/>
+      <polygon points="50,40 34,92 66,92" fill="#3A2210"/>
+      <polygon points="50,40 34,92 42,92" fill="#FFE3D0"/><polygon points="50,40 66,92 58,92" fill="#FFE3D0"/>
+      <path d="M50 14 V6" stroke-width="2"/><polygon points="50,6 60,9 50,12" fill="#2FB8A9"/>
+    </g></svg>`,
+    igloo: `<svg viewBox="0 0 100 100"><g stroke="#8DB0CF" stroke-width="1.6" stroke-linejoin="round">
+      <path d="M6 90 Q6 22 50 20 Q94 22 94 90 Z" fill="#F4FBFF"/>
+      <path d="M8 72 Q50 64 92 72 M12 52 Q50 42 88 52 M22 34 Q50 26 78 34" fill="none"/>
+      <path d="M30 72 V90 M66 70 V90 M48 52 V67 M24 53 V70 M74 52 V69 M38 34 V48 M62 34 V48" fill="none"/>
+      <path d="M6 90 Q6 22 50 20 Q94 22 94 90 Z" fill="url(#domeShade)" stroke="none" opacity=".5"/>
+      <path d="M32 90 V74 Q50 54 68 74 V90 Z" fill="#DCEBF7"/>
+      <path d="M40 90 V78 Q50 66 60 78 V90 Z" fill="#2A3A55" stroke="none"/>
+    </g></svg>`,
+    sofa: `<svg viewBox="0 0 200 100"><g ${S}>
+      <rect x="20" y="84" width="10" height="10" fill="#8C5A2E"/><rect x="170" y="84" width="10" height="10" fill="#8C5A2E"/>
+      <rect x="18" y="16" width="164" height="46" rx="14" fill="#5FD3C6"/>
+      <rect x="10" y="50" width="180" height="36" rx="12" fill="#3CC0B4"/>
+      <rect x="30" y="44" width="68" height="20" rx="8" fill="#7FE0D4"/><rect x="102" y="44" width="68" height="20" rx="8" fill="#7FE0D4"/>
+      <rect x="2" y="38" width="28" height="48" rx="12" fill="#5FD3C6"/><rect x="170" y="38" width="28" height="48" rx="12" fill="#5FD3C6"/>
+      <rect x="10" y="50" width="180" height="36" rx="12" fill="url(#shadeB)" stroke="none"/>
+      <rect x="128" y="24" width="30" height="22" rx="8" fill="#FFD166" transform="rotate(-8 143 35)"/>
+    </g></svg>`,
+    rug: `<svg viewBox="0 0 200 100"><g ${S}>
+      <path d="M8 40 h-6 M8 50 h-6 M8 60 h-6 M8 70 h-6 M192 40 h6 M192 50 h6 M192 60 h6 M192 70 h6" stroke="#C9A06A" stroke-width="2.5"/>
+      <ellipse cx="100" cy="55" rx="92" ry="38" fill="#FF9CCB"/>
+      <ellipse cx="100" cy="55" rx="72" ry="28" fill="none" stroke="#FFD166" stroke-width="6"/>
+      <ellipse cx="100" cy="55" rx="50" ry="18" fill="none" stroke="#7CCBFF" stroke-width="6"/>
+      <ellipse cx="100" cy="55" rx="26" ry="8" fill="#fff" stroke="none" opacity=".7"/>
+    </g></svg>`,
+    table: `<svg viewBox="0 0 200 100"><g ${S}>
+      <rect x="16" y="56" width="9" height="40" fill="#8C5A2E"/><rect x="160" y="56" width="9" height="40" fill="#8C5A2E"/>
+      <rect x="182" y="42" width="7" height="40" fill="#6E4222"/>
+      <polygon points="24,34 194,34 178,50 8,50" fill="url(#planks)"/>
+      <polygon points="8,50 178,50 178,58 8,58" fill="url(#woodG)"/><polygon points="178,50 194,34 194,42 178,58" fill="#8C5A2E"/>
+      <path d="M90 30 h16 v-12 h-16 z" fill="#fff"/><path d="M106 21 q6 0 6 4 q0 4 -6 4" fill="none"/>
+      <path d="M95 14 q2 -4 0 -8 M101 14 q2 -4 0 -8" fill="none" stroke="#C9C1B6" stroke-width="1.4"/>
+    </g></svg>`,
+    chair: `<svg viewBox="0 0 100 100"><g ${S}>
+      <rect x="26" y="8" width="48" height="46" rx="8" fill="url(#woodG)"/>
+      <path d="M38 14 V50 M50 14 V50 M62 14 V50" stroke="#8C5A2E" stroke-width="3"/>
+      <rect x="28" y="62" width="7" height="32" fill="#8C5A2E"/><rect x="66" y="62" width="7" height="32" fill="#8C5A2E"/>
+      <polygon points="22,54 78,54 84,66 16,66" fill="url(#planks)"/>
+      <ellipse cx="50" cy="58" rx="20" ry="4" fill="#FF9CCB" stroke="none"/>
+    </g></svg>`,
+    lamp: `<svg viewBox="0 0 100 100"><g ${S}>
+      <circle cx="50" cy="30" r="26" fill="#FFF3B0" stroke="none" opacity=".45"/>
+      <ellipse cx="50" cy="91" rx="17" ry="5" fill="#8C5A2E"/><rect x="47" y="40" width="6" height="50" fill="#C9A06A"/>
+      <polygon points="26,44 74,44 63,12 37,12" fill="#FFD166"/>
+      <polygon points="26,44 74,44 63,12 37,12" fill="url(#shadeB)" stroke="none"/>
+    </g></svg>`,
+    bookshelf: `<svg viewBox="0 0 100 200"><g ${S}>
+      <rect x="10" y="6" width="80" height="188" rx="4" fill="url(#woodG)"/><rect x="18" y="14" width="64" height="172" fill="#7A4A26"/>
+      <path d="M18 58 H82 M18 102 H82 M18 146 H82" stroke-width="5" stroke="#C98B4F"/>
+      <g stroke-width="1.2">
+        <rect x="22" y="26" width="9" height="30" fill="#F0645A"/><rect x="32" y="22" width="8" height="34" fill="#4E95EE"/><rect x="41" y="28" width="10" height="28" fill="#FFD166"/><rect x="56" y="24" width="8" height="32" fill="#62C46A" transform="rotate(10 60 40)"/>
+        <rect x="22" y="70" width="10" height="30" fill="#9B6CF0"/><rect x="33" y="66" width="8" height="34" fill="#FF7EB3"/><rect x="60" y="72" width="16" height="28" fill="#3CC0B4"/>
+        <rect x="24" y="114" width="9" height="30" fill="#F59A3C"/><rect x="34" y="118" width="9" height="26" fill="#4E95EE"/><rect x="44" y="112" width="8" height="32" fill="#F0645A"/>
+        <rect x="26" y="160" width="10" height="24" fill="#62C46A"/><rect x="38" y="156" width="9" height="28" fill="#FFD166"/><rect x="60" y="158" width="14" height="26" fill="#FF7EB3"/>
+      </g>
+    </g></svg>`,
+    trampoline: `<svg viewBox="0 0 200 100"><g ${S}>
+      <path d="M36 56 L28 94 M164 56 L172 94 M100 64 V96" stroke-width="5" stroke="#3A3A48"/>
+      <ellipse cx="100" cy="48" rx="88" ry="20" fill="#4E95EE"/>
+      <ellipse cx="100" cy="48" rx="74" ry="14" fill="#2A2A36"/>
+      <path d="M40 40 q30 -6 60 -6" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="3"/>
+    </g></svg>`,
+    swing: `<svg viewBox="0 0 100 100"><g ${S}>
+      <path d="M12 96 L30 8 M88 96 L70 8" stroke="#A86A35" stroke-width="6" stroke-linecap="round"/>
+      <path d="M26 8 H74" stroke="#8C5A2E" stroke-width="6" stroke-linecap="round"/>
+      <path d="M40 10 V70 M60 10 V70" stroke="#C9A06A" stroke-width="2.5"/>
+      <rect x="32" y="68" width="36" height="8" rx="3" fill="url(#pinkG)"/>
+    </g></svg>`,
+    digbox: `<svg viewBox="0 0 200 100"><g ${S}>
+      <polygon points="22,30 192,30 178,48 8,48" fill="#7A4A26"/>
+      <g stroke="none" fill="#A8703F"><circle cx="50" cy="38" r="3"/><circle cx="90" cy="42" r="2.5"/><circle cx="130" cy="36" r="3"/><circle cx="160" cy="40" r="2.5"/></g>
+      <polygon points="8,48 178,48 178,88 8,88" fill="url(#planks)"/><polygon points="178,48 192,30 192,70 178,88" fill="#8C5A2E"/>
+      <path d="M120 34 L150 6" stroke="#C9A06A" stroke-width="4" stroke-linecap="round"/><path d="M112 28 L124 40 L118 46 L108 36 Z" fill="#C8CDD6"/>
+    </g></svg>`,
     ladder: `<svg viewBox="0 0 100 200"><g ${S}>
       <rect x="16" y="6" width="13" height="188" rx="5" fill="url(#woodG)"/>
       <rect x="71" y="6" width="13" height="188" rx="5" fill="url(#woodG)"/>
@@ -809,6 +927,26 @@
           <rect x="70" y="20" width="22" height="5" fill="${c.band}"/><ellipse cx="81" cy="28" rx="18" ry="4" fill="${c.m}"/></g>` },
         flowers: { name: '🌸 Flowers', col: 'pink', svg: c => `<path d="M58 40 Q81 18 104 40" fill="none" stroke="#62C46A" stroke-width="2.5"/>
           ${flower(59, 38, c.m)}${flower(69, 29, '#fff')}${flower(81, 25, c.m)}${flower(93, 29, '#fff')}${flower(103, 38, c.m)}` },
+        cowboy: { name: '🤠 Cowboy hat', col: 'brown', svg: c => `<g ${HO}><ellipse cx="81" cy="27" rx="27" ry="6" fill="${c.m}"/>
+          <path d="M68 27 Q67 8 81 11 Q95 8 94 27 Z" fill="${c.m}"/><rect x="68" y="20" width="26" height="4" fill="${c.d}"/></g>` },
+        sunhat: { name: '👒 Sun hat', col: 'yellow', svg: c => `<g ${HO}><ellipse cx="81" cy="28" rx="33" ry="7" fill="${c.m}"/>
+          <ellipse cx="81" cy="21" rx="14" ry="10" fill="${c.m}"/><path d="M67 25 Q81 29 95 25" stroke="#FF7EB3" stroke-width="4" fill="none"/></g>${flower(96, 24, '#FF9CCB')}` },
+        chef: { name: '👨‍🍳 Chef hat', col: 'white', svg: c => `<g ${HO}><circle cx="71" cy="13" r="8" fill="${c.m}"/><circle cx="91" cy="13" r="8" fill="${c.m}"/>
+          <circle cx="81" cy="8" r="9" fill="${c.m}"/><rect x="69" y="15" width="24" height="13" rx="3" fill="${c.m}"/></g>` },
+        wizard: { name: '🧙 Wizard hat', col: 'purple', svg: c => `<g ${HO}><polygon points="66,30 98,30 88,0" fill="${c.m}"/>
+          <ellipse cx="82" cy="30" rx="20" ry="4" fill="${c.d}"/></g>
+          <polygon points="${star(80, 20, 3.5)}" fill="#FFD166"/><polygon points="${star(87, 11, 2.6)}" fill="#FFD166"/>` },
+        bunny: { name: '🐰 Bunny ears', col: 'white', svg: c => `<g ${HO}><ellipse cx="72" cy="14" rx="5.5" ry="15" fill="${c.m}" transform="rotate(-12 72 14)"/>
+          <ellipse cx="91" cy="13" rx="5.5" ry="15" fill="${c.m}" transform="rotate(12 91 13)"/>
+          <ellipse cx="72" cy="14" rx="2.5" ry="10" fill="#FFB3CC" stroke="none" transform="rotate(-12 72 14)"/>
+          <ellipse cx="91" cy="13" rx="2.5" ry="10" fill="#FFB3CC" stroke="none" transform="rotate(12 91 13)"/>
+          <path d="M62 32 Q81 18 100 32" fill="none" stroke="${c.d}" stroke-width="3"/></g>` },
+        unicorn: { name: '🦄 Unicorn horn', col: 'yellow', svg: c => `<g ${HO}><polygon points="76,28 86,28 81,3" fill="${c.m}"/>
+          <path d="M77.5 22 L84 20 M78.5 15 L83 13.5" stroke="${c.d}" stroke-width="1.5"/></g>${flower(71, 28, '#FF9CCB')}${flower(91, 28, '#C3A8FF')}` },
+        tiara: { name: '💎 Tiara', col: 'silver', svg: c => `<g ${HO}><path d="M66 31 Q81 22 96 31 L93 22 L87 26 L81 16 L75 26 L69 22 Z" fill="${c.m}"/>
+          <circle cx="81" cy="22" r="2.6" fill="#FF7EB3"/></g>` },
+        headphones: { name: '🎧 Headphones', col: 'pink', svg: c => `<path d="M58 46 Q58 14 81 14 Q104 14 104 46" fill="none" stroke="${c.d}" stroke-width="5"/>
+          <g ${HO}><rect x="52" y="39" width="10" height="17" rx="4" fill="${c.m}"/><rect x="100" y="39" width="10" height="17" rx="4" fill="${c.m}"/></g>` },
         bow: { name: '🎀 Bow', col: 'pink', svg: c => `<g ${HO}><polygon points="97,22 85,13 86,31" fill="${c.m}"/><polygon points="97,22 109,13 108,31" fill="${c.m}"/>
           <circle cx="97" cy="22" r="4" fill="${c.d}"/></g>` },
         beanie: { name: '🧶 Woolly hat', col: 'teal', svg: c => `<g ${HO}><path d="M56 40 Q56 12 81 12 Q106 12 106 40 Z" fill="${c.m}"/>
@@ -827,6 +965,13 @@
           <path d="M66 46 L70 46" stroke="#fff" stroke-opacity=".7" stroke-width="1.6"/><path d="M85 46 L89 46" stroke="#fff" stroke-opacity=".7" stroke-width="1.6"/></g>` },
         hearts: { name: '💖 Hearts', col: 'pink', svg: c => `<g stroke="${c.d}" stroke-width="1.6"><path d="${heart(72, 47, 1)}" fill="${c.m}" fill-opacity=".92"/>
           <path d="${heart(90, 47, 1)}" fill="${c.m}" fill-opacity=".92"/><path d="M78 46 Q81 44 84 46" fill="none"/></g>` },
+        goggles: { name: '🥽 Goggles', col: 'orange', svg: c => `<path d="M58 46 H104" stroke="${c.d}" stroke-width="3"/>
+          <g stroke="${c.m}" stroke-width="3.5"><circle cx="72" cy="48" r="8.5" fill="#BFE6FF" fill-opacity=".55"/><circle cx="90" cy="48" r="8.5" fill="#BFE6FF" fill-opacity=".55"/></g>` },
+        monocle: { name: '🧐 Monocle', col: 'yellow', svg: c => `<circle cx="90" cy="48" r="8" fill="#fff" fill-opacity=".25" stroke="${c.d}" stroke-width="2.4"/>
+          <path d="M96 54 Q103 64 98 74" fill="none" stroke="${c.d}" stroke-width="1.4"/>` },
+        mask: { name: '🦸 Hero mask', col: 'blue', svg: c => `<path d="M60 43 Q81 35 102 43 Q104 53 95 54 Q81 50 67 54 Q58 53 60 43 Z" fill="${c.m}" stroke="#5A4030" stroke-width="1.8"/>
+          <ellipse cx="72" cy="47" rx="5.5" ry="4.5" fill="#fff"/><ellipse cx="90" cy="47" rx="5.5" ry="4.5" fill="#fff"/>
+          <circle cx="72" cy="47.5" r="3.6" fill="#2B1B12"/><circle cx="90" cy="47.5" r="3.6" fill="#2B1B12"/>` },
         stars: { name: '⭐ Stars', col: 'yellow', svg: c => `<g stroke="${c.d}" stroke-width="1.4"><polygon points="${star(72, 48, 9)}" fill="${c.m}" fill-opacity=".92"/>
           <polygon points="${star(90, 48, 9)}" fill="${c.m}" fill-opacity=".92"/></g>` },
       },
@@ -839,6 +984,16 @@
           <path d="M66 79 L68 87 M78 82 L79 90 M92 81 L91 89" stroke="#fff" stroke-opacity=".85" stroke-width="2.5"/></g>` },
         bowtie: { name: '🎀 Bow tie', col: 'blue', svg: c => `<g ${HO}><polygon points="81,82 69,75 69,89" fill="${c.m}"/><polygon points="81,82 93,75 93,89" fill="${c.m}"/>
           <circle cx="81" cy="82" r="3.5" fill="${c.d}"/></g>` },
+        bandana: { name: '🔺 Bandana', col: 'red', svg: c => `<g ${HO}><polygon points="61,74 101,74 81,94" fill="${c.m}"/></g>
+          <g fill="#fff" fill-opacity=".85"><circle cx="72" cy="78" r="1.8"/><circle cx="81" cy="80" r="1.8"/><circle cx="90" cy="78" r="1.8"/><circle cx="81" cy="87" r="1.8"/></g>` },
+        medal: { name: '🏅 Medal', col: 'blue', svg: c => `<path d="M68 72 L81 86 L94 72" fill="none" stroke="${c.m}" stroke-width="4.5"/>
+          <g ${HO}><circle cx="81" cy="90" r="6.5" fill="#FFD166"/></g><polygon points="${star(81, 90, 3.5)}" fill="#E0A21E"/>` },
+        lei: { name: '🌺 Flower lei', col: 'pink', svg: c => [0, 1, 2, 3, 4, 5, 6].map(i => {
+          const t = i / 6, x = 61 + 40 * t, y = 75 + 22 * t * (1 - t);
+          return flower(+x.toFixed(1), +y.toFixed(1), i % 2 ? '#fff' : c.m);
+        }).join('') },
+        locket: { name: '💗 Heart necklace', col: 'pink', svg: c => `<path d="M64 74 Q81 88 98 74" fill="none" stroke="#C9A06A" stroke-width="1.5"/>
+          <path d="${heart(81, 85, 0.75)}" fill="${c.m}" stroke="${c.d}" stroke-width="1.2"/>` },
         pearls: { name: '📿 Pearls', col: 'white', svg: c => {
           let s = '';
           for (let i = 0; i <= 8; i++) {
@@ -847,6 +1002,26 @@
           }
           return s;
         } },
+      },
+    },
+    back: {
+      label: 'Back',
+      items: {
+        fairy: { name: '🧚 Fairy wings', col: 'sky', svg: c => `<g stroke="${c.d}" stroke-width="1.5" fill="${c.m}" fill-opacity=".6">
+          <ellipse cx="30" cy="26" rx="10" ry="19" transform="rotate(-30 30 26)"/><ellipse cx="44" cy="22" rx="9" ry="18" transform="rotate(15 44 22)"/>
+          <ellipse cx="26" cy="42" rx="6" ry="10" transform="rotate(-60 26 42)"/></g>` },
+        angel: { name: '😇 Angel wings', col: 'white', svg: c => `<g ${HO}><path d="M44 38 Q22 6 8 26 Q14 30 10 36 Q18 38 16 44 Q30 46 44 38 Z" fill="${c.m}"/>
+          <path d="M40 36 Q26 18 16 28 M38 38 Q26 32 18 38" fill="none" stroke="${c.d}" stroke-width="1.2"/></g>` },
+        butterfly: { name: '🦋 Butterfly wings', col: 'orange', svg: c => `<g ${HO}>
+          <ellipse cx="28" cy="20" rx="11" ry="15" fill="${c.m}" transform="rotate(-35 28 20)"/>
+          <ellipse cx="44" cy="18" rx="9" ry="13" fill="${c.m}" transform="rotate(20 44 18)"/>
+          <ellipse cx="26" cy="38" rx="6" ry="9" fill="${c.d}" transform="rotate(-70 26 38)"/></g>
+          <circle cx="26" cy="18" r="3.5" fill="#fff" fill-opacity=".85"/><circle cx="45" cy="16" r="2.8" fill="#fff" fill-opacity=".85"/>` },
+        cape: { name: '🦸 Cape', col: 'red', svg: c => `<g ${HO}><path d="M66 44 Q42 28 16 44 Q6 62 14 84 Q28 74 40 82 Q50 68 62 70 Z" fill="${c.m}"/>
+          <path d="M58 46 Q40 38 24 50 M48 52 Q34 52 22 66" fill="none" stroke="${c.d}" stroke-width="1.6"/>
+          <circle cx="64" cy="48" r="3" fill="#FFD166"/></g>` },
+        backpack: { name: '🎒 Backpack', col: 'green', svg: c => `<g ${HO}><rect x="18" y="38" width="28" height="30" rx="8" fill="${c.m}"/>
+          <rect x="23" y="52" width="18" height="12" rx="4" fill="${c.d}"/><path d="M26 38 Q32 30 38 38" fill="none" stroke="${c.d}" stroke-width="2.5"/></g>` },
       },
     },
   };
@@ -861,6 +1036,8 @@
     blue:   { name: 'Blue',   m: '#4E7FEE', d: '#2B54B8', band: '#fff' },
     purple: { name: 'Purple', m: '#A07CF2', d: '#6A45C4', band: '#fff' },
     pink:   { name: 'Pink',   m: '#FF7EB3', d: '#D24A85', band: '#fff' },
+    brown:  { name: 'Brown',  m: '#A86A35', d: '#6E4222', band: '#FFD166' },
+    silver: { name: 'Silver', m: '#DDE2EC', d: '#8F98AB', band: '#E0558F' },
     black:  { name: 'Black',  m: '#3A3A48', d: '#1E1E28', band: '#E0558F' },
     white:  { name: 'White',  m: '#FFFDF7', d: '#B8B2A8', band: '#E0558F' },
   };
@@ -872,8 +1049,8 @@
   }
   function outfitSVG(outfit) {
     if (!outfit) return '';
-    // neck first, then glasses, then hat on top
-    return ['neck', 'face', 'head'].map(slot => {
+    // things on the back first, then neck, then glasses, then hat on top
+    return ['back', 'neck', 'face', 'head'].map(slot => {
       const a = outfit[slot] && ACCESSORIES[slot].items[outfit[slot]];
       return a ? a.svg(CLOTH_COLOURS[slotColour(outfit, slot)]) : '';
     }).join('');
@@ -963,6 +1140,7 @@
   if (state.needs && !state.needsBy[state.ham]) state.needsBy[state.ham] = state.needs;   // from before there could be several
   delete state.needs; delete state.happy;
   if (!Array.isArray(state.cage) || !state.cage.length) state.cage = [state.ham];
+  if (!Array.isArray(state.poos)) state.poos = [];
   function needsOf(id) {
     state.needsBy[id] = Object.assign({ food: 80, drink: 80, sleep: 80, fun: 80 }, state.needsBy[id] || {});
     return state.needsBy[id];
@@ -1096,8 +1274,9 @@
     { k: 'fun',   icon: '🎾', label: 'Fun',   low: 'Bored!', ask: '🎾' },
   ];
   const DECAY = { food: 3, drink: 4, sleep: 2, fun: 3 };   // lost every 10 seconds
-  $('needs').innerHTML = NEEDS.map(n =>
+  $('needs').innerHTML = [...NEEDS, { k: 'clean', icon: '🧹', label: 'Clean' }].map(n =>
     `<div class="need" id="need-${n.k}"><span>${n.icon}</span><span>${n.label}</span><div class="meter"><i></i></div></div>`).join('');
+  const cleanliness = () => Math.max(0, 100 - state.poos.length * 15);
   function lowestOf(needs) {
     return NEEDS.reduce((a, b) => needs[b.k] < needs[a.k] ? b : a);
   }
@@ -1113,7 +1292,12 @@
     const low = lowestOf(needs), lowV = needs[low.k];
     $('hname').textContent = nameOf(state.ham);
     $('face').textContent = lowV < 20 ? '😢' : avg < 45 ? '🙂' : avg < 75 ? '😄' : '🥰';
-    $('happyText').textContent = lowV < 30 ? `${low.low} ${nameOf(state.ham)} needs you!` : avg < 75 ? 'Happy!' : 'Super happy!';
+    const clean = cleanliness();
+    $('need-clean').querySelector('i').style.width = clean + '%';
+    $('need-clean').classList.toggle('low', clean < 50);
+    $('happyText').textContent = lowV < 30 ? `${low.low} ${nameOf(state.ham)} needs you!`
+      : clean < 50 ? 'Eww! The cage needs cleaning! 💩' : avg < 75 ? 'Happy!' : 'Super happy!';
+    if (clean < 50 && lowV >= 20) $('face').textContent = '😖';
     herd.forEach(h => {
       const hn = needsOf(h.id), l = lowestOf(hn);
       h.setNeedIcon(hn[l.k] < 30 ? l.ask : '');
@@ -1130,6 +1314,8 @@
         const rate = k === 'sleep' ? (state.night ? 1 : 2.5) : k === 'fun' ? (state.night ? 4 : 3) : DECAY[k];
         needs[k] = clamp(needs[k] - rate, 0, 100);
       }
+      needs.fun = clamp(needs.fun - state.poos.length * 0.6, 0, 100);   // a messy cage is no fun
+      if (Math.random() < 0.06) h.poo();
     });
     renderNeeds(); save();
   }, 10000);
@@ -1181,7 +1367,7 @@
   function updateHelp() {
     $('help').textContent = selectedShelf
       ? `👆 Tap in the cage to add the ${DEFS[selectedShelf].label.toLowerCase()}. Tap it on the shelf again when you're finished.`
-      : '👆 Tap something in the cage and your hamster will go to it! ✋ Hold your finger on something until it wiggles, then drag it to move it, or into the bin to throw it away. Hold and let go to paint 🎨 or turn it.';
+      : '👆 Tap something in the cage and your hamster will go to it! ✋ Hold your finger on something until it wiggles, then drag it to move it, or into the bin to throw it away. Hold and let go to paint 🎨 or turn it. Tap 💩 to clean it up!';
   }
 
   // ---------- Cage items ----------
@@ -1194,6 +1380,7 @@
         (DEFS[it.type].refill && fillOf(it) <= 0.02 ? ' empty' : '');
       el.dataset.id = it.id;
       Object.assign(el.style, { left: pct(it.c, COLS), top: pct(it.r, ROWS), width: pct(w, COLS), height: pct(h, ROWS) });
+      if (DEFS[it.type].flat) el.style.zIndex = 1;   // rugs lie underneath everything
       el.innerHTML = itemHTML(it);
       el.addEventListener('pointerdown', e => startPress(e, { kind: 'placed', id: it.id }));
       itemsLayer.appendChild(el);
@@ -1251,6 +1438,30 @@
     if (act === 'bin') { removeItem(it.id); return; }
     pop(); save(); renderItems();
   });
+  // ---------- Poo! Tap it to clean it up ----------
+  function renderPoos() {
+    $('poos').innerHTML = state.poos.map(p =>
+      `<span class="poo" data-poo="${p.id}" style="left:${pct(p.x, COLS)};top:${pct(p.y, ROWS)}" role="button" aria-label="Poo: tap to clean it up">💩</span>`).join('');
+  }
+  function dropPoo(x, y) {
+    if (state.poos.length >= 12) return;
+    state.poos.push({ id: state.nextId++, x: clamp(x, 0.3, COLS - 0.3), y: clamp(y, 0.3, ROWS - 0.3) });
+    save(); renderPoos(); renderNeeds();
+    beep(220, 140, 0.08, 0.06);
+  }
+  function cleanPoo(id) {
+    const p = state.poos.find(q => q.id === id); if (!p) return;
+    state.poos = state.poos.filter(q => q.id !== id); save(); renderPoos();
+    const s = document.createElement('span');
+    s.className = 'heart'; s.textContent = '✨';
+    s.style.left = pct(p.x, COLS); s.style.top = pct(p.y - 0.4, ROWS);
+    cage.appendChild(s); setTimeout(() => s.remove(), 1300);
+    beep(900, 1600, 0.12, 0.08);
+    herd.forEach(h => addNeedFor(h.id, 'fun', 3));
+    if (!state.poos.length) say(pickRand(['Sparkly clean! Thank you! ✨', 'Yay, a clean cage! 💖']), 2200);
+    renderNeeds();
+  }
+
   function refill(it) {
     it.fill = 1; save(); pop();
     renderItems();
@@ -1391,6 +1602,8 @@
   cage.addEventListener('click', e => {
     if (justDragged) return;
     if (e.target.closest('.toolbar')) return;
+    const pooEl = e.target.closest('.poo');
+    if (pooEl) { cleanPoo(+pooEl.dataset.poo); return; }
     const hamEl = e.target.closest('.hamster');
     if (hamEl) {
       // tapping a hamster picks it (so taps on things send this one) and gives it a tickle
@@ -1422,7 +1635,7 @@
       return;
     }
     clearTimeout(clearArmed); clearArmed = null; b.textContent = '🧹 Empty the cage';
-    state.items = []; selectedId = null; save(); renderItems();
+    state.items = []; state.poos = []; selectedId = null; save(); renderItems(); renderPoos(); renderNeeds();
   });
   function renderSound() { $('sound').textContent = state.sound ? '🔊 Sound on' : '🔇 Sound off'; }
   $('sound').addEventListener('click', () => { state.sound = !state.sound; save(); renderSound(); });
@@ -1585,6 +1798,12 @@
 
   function nextAction() {
     resetMood();
+    // a messy cage gets complained about
+    if (state.poos.length >= 4 && Math.random() < 0.2) {
+      squeak(); say(pickRand(['Eww! Please clean up the poo! 💩', "It's a bit smelly in here! 🧹"]), 2800);
+      ham.classList.add('hop'); setTimeout(() => ham.classList.remove('hop'), 600);
+      schedule(3500); return;
+    }
     // Look after the most important need first
     const need = lowestNeed(), v = N()[need.k];
     if (v < 40) { if (!tryNeed(need.k)) askFor(need.k); return; }
@@ -1678,7 +1897,7 @@
   }
   function eat(id) {
     if (!findItem(id)) { schedule(600); return; }
-    say('Yum! 😋'); munch(); hearts(2); addNeed('food', 25); addNeed('fun', 4);
+    say('Yum! 😋'); munch(); hearts(2); addNeed('food', 25); addNeed('fun', 4); maybePoo();
     const el = itemEl(id); if (el) el.classList.add('eaten');
     setTimeout(() => removeItem(id), 450);
     schedule(1700);
@@ -1686,7 +1905,7 @@
   function eatBowl(id) {
     const it = findItem(id);
     if (!it || fillOf(it) <= 0.02) { schedule(600); return; }
-    say(pickRand(['Crunch crunch!', 'Yummy seeds!'])); munch(); hearts(1); addNeed('food', 35);
+    say(pickRand(['Crunch crunch!', 'Yummy seeds!'])); munch(); hearts(1); addNeed('food', 35); maybePoo();
     it.fill = Math.max(0, fillOf(it) - 0.34);
     if (it.fill < 0.05) it.fill = 0;
     save(); renderItems();
@@ -1727,10 +1946,14 @@
     schedule(1500);
   }
 
+  // poo comes out of the back end, whichever way the hamster is facing
+  function poo() { dropPoo(hface.classList.contains('flip') ? hx + HW * 0.85 : hx + HW * 0.15, hy + HH * 0.85); }
+  function maybePoo() { if (Math.random() < 0.45) setTimeout(() => { if (ham.isConnected) poo(); }, rand(6000, 14000)); }
+
   draw();
   placeHam(hx, hy, 0);
   return {
-    id, el: ham, say, hearts, tickle, commandTo, draw,
+    id, el: ham, say, hearts, tickle, commandTo, draw, poo,
     start() { schedule(1500 + Math.random() * 1500); },
     stop() { clearTimeout(actTimer); clearTimeout(bubbleTimer); resetMood(); ham.remove(); },
     resting: () => ham.classList.contains('sleeping') || ham.classList.contains('inside'),
@@ -2333,11 +2556,13 @@
 
   // --- Fashion Show ---
   const THEMES = [
-    { name: 'Party time! 🎉', best: { head: ['party'], face: ['stars', 'hearts'], neck: ['bowtie'] }, ok: { head: ['crown', 'bow'], face: ['cool'], neck: ['pearls'] }, cols: ['pink', 'purple', 'yellow', 'orange', 'sky'] },
-    { name: 'Snowy day ❄️', best: { head: ['beanie'], face: ['round'], neck: ['scarf'] }, ok: { head: ['tophat', 'bow'], face: ['cool'], neck: ['bowtie'] }, cols: ['white', 'sky', 'blue', 'red'] },
-    { name: 'Royal ball 👑', best: { head: ['crown', 'tophat'], face: ['round'], neck: ['pearls', 'bowtie'] }, ok: { head: ['flowers', 'bow'], face: ['stars'], neck: ['scarf'] }, cols: ['purple', 'yellow', 'black', 'white'] },
-    { name: 'Beach day 🏖️', best: { head: ['flowers'], face: ['cool', 'hearts'], neck: [''] }, ok: { head: ['bow', 'party'], face: ['stars'], neck: ['pearls'] }, cols: ['yellow', 'orange', 'sky', 'teal'] },
-    { name: 'Garden party 🌸', best: { head: ['flowers', 'bow'], face: ['hearts', 'round'], neck: ['pearls', 'bowtie'] }, ok: { head: ['tophat', 'party'], face: ['stars'], neck: ['scarf'] }, cols: ['pink', 'green', 'white', 'yellow'] },
+    { name: 'Party time! 🎉', best: { head: ['party', 'unicorn'], face: ['stars', 'hearts'], neck: ['bowtie'] }, ok: { head: ['crown', 'bow', 'headphones', 'wizard'], face: ['cool'], neck: ['pearls', 'lei', 'medal'] }, cols: ['pink', 'purple', 'yellow', 'orange', 'sky'] },
+    { name: 'Snowy day ❄️', best: { head: ['beanie'], face: ['round', 'goggles'], neck: ['scarf'] }, ok: { head: ['tophat', 'bow', 'bunny', 'headphones'], face: ['cool'], neck: ['bowtie', 'bandana'] }, cols: ['white', 'sky', 'blue', 'red', 'silver'] },
+    { name: 'Royal ball 👑', best: { head: ['crown', 'tiara', 'tophat'], face: ['round', 'monocle'], neck: ['pearls', 'locket'] }, ok: { head: ['flowers', 'bow'], face: ['stars'], neck: ['bowtie', 'medal'] }, cols: ['purple', 'yellow', 'black', 'white', 'silver'] },
+    { name: 'Beach day 🏖️', best: { head: ['sunhat', 'flowers'], face: ['cool', 'hearts'], neck: ['', 'lei'] }, ok: { head: ['bow', 'party', 'cowboy'], face: ['stars', 'goggles'], neck: ['pearls', 'bandana'] }, cols: ['yellow', 'orange', 'sky', 'teal'] },
+    { name: 'Garden party 🌸', best: { head: ['flowers', 'bow', 'sunhat'], face: ['hearts', 'round'], neck: ['pearls', 'bowtie', 'locket'] }, ok: { head: ['tophat', 'party', 'bunny'], face: ['stars'], neck: ['scarf', 'lei'] }, cols: ['pink', 'green', 'white', 'yellow'] },
+    { name: 'Superhero ⚡', best: { head: [''], face: ['mask'], neck: ['medal'] }, ok: { head: ['headphones'], face: ['goggles', 'cool'], neck: ['bandana'] }, cols: ['red', 'blue', 'yellow', 'black'] },
+    { name: 'Magic show 🪄', best: { head: ['wizard', 'tophat', 'unicorn'], face: ['stars', 'monocle'], neck: ['bowtie'] }, ok: { head: ['crown', 'tiara'], face: ['round'], neck: ['locket', 'pearls'] }, cols: ['purple', 'black', 'sky', 'silver'] },
   ];
   function startFashion() {
     stopGames();
@@ -2399,7 +2624,7 @@
 
   // ---------- Start ----------
   syncHerd();
-  renderPicker(); drawHamster(); renderShelf(); renderItems(); updateHelp(); renderSound();
+  renderPicker(); drawHamster(); renderShelf(); renderItems(); renderPoos(); updateHelp(); renderSound();
   setNight(!!state.night, false);
   herd.forEach(h => setTimeout(() => h.say(`Hi, I'm ${nameOf(h.id)}!`), 600 + Math.random() * 900));
 })();
