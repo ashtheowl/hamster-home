@@ -65,6 +65,9 @@
   .acc { font: inherit; font-size: 14px; border: 2px solid var(--line); background: #FFF8F0; border-radius: 999px; padding: 3px 10px; cursor: pointer; color: inherit; }
   .acc:hover { background: #FFE3EF; }
   .acc.on { border-color: var(--pink); background: #FFE3EF; font-weight: 600; }
+  .slot.cols { margin-top: 4px; gap: 5px; }
+  .slot.cols b { font-weight: 400; color: var(--soft); font-size: 14px; }
+  .slot.cols .sw { width: 28px; height: 28px; }
   .happy { text-align: center; }
   .face { font-size: 46px; line-height: 1; }
   .meter { height: 22px; border-radius: 999px; background: #FFE9D6; overflow: hidden; margin-top: 8px; }
@@ -702,62 +705,84 @@
     head: {
       label: 'Hats',
       items: {
-        party: { name: '🎉 Party hat', svg: `<g ${HO}><polygon points="70,30 92,30 81,2" fill="#7CCBFF"/>
-          <path d="M73.4 22 H88.6 M76.8 13 H85.2" stroke="#FF7EB3" stroke-width="4"/>
-          <polygon points="70,30 92,30 81,2" fill="none"/><circle cx="81" cy="3" r="4.5" fill="#FFD166"/></g>` },
-        crown: { name: '👑 Crown', svg: `<g ${HO}><path d="M67 31 L67 14 L74 22 L81 9 L88 22 L95 14 L95 31 Z" fill="#FFD166"/>
-          <circle cx="81" cy="25" r="2.8" fill="#E64B5D"/><circle cx="72.5" cy="26" r="2.2" fill="#4E95EE"/><circle cx="89.5" cy="26" r="2.2" fill="#62C46A"/></g>` },
-        tophat: { name: '🎩 Top hat', svg: `<g ${HO}><rect x="70" y="5" width="22" height="23" rx="2" fill="#3A3A48"/>
-          <rect x="70" y="20" width="22" height="5" fill="#E0558F"/><ellipse cx="81" cy="28" rx="18" ry="4" fill="#3A3A48"/></g>` },
-        flowers: { name: '🌸 Flowers', svg: `<path d="M58 40 Q81 18 104 40" fill="none" stroke="#62C46A" stroke-width="2.5"/>
-          ${flower(59, 38, '#FF9CCB')}${flower(69, 29, '#fff')}${flower(81, 25, '#C3A8FF')}${flower(93, 29, '#fff')}${flower(103, 38, '#FF9CCB')}` },
-        bow: { name: '🎀 Bow', svg: `<g ${HO}><polygon points="97,22 85,13 86,31" fill="#FF7EB3"/><polygon points="97,22 109,13 108,31" fill="#FF7EB3"/>
-          <circle cx="97" cy="22" r="4" fill="#E0558F"/></g>` },
-        beanie: { name: '🧶 Woolly hat', svg: `<g ${HO}><path d="M56 40 Q56 12 81 12 Q106 12 106 40 Z" fill="#6FD8CB"/>
-          <path d="M66 18 V38 M81 13 V38 M96 18 V38" stroke="#2FB8A9" stroke-width="2"/>
-          <rect x="54" y="34" width="54" height="9" rx="4" fill="#2FB8A9"/><circle cx="81" cy="10" r="6" fill="#fff"/></g>` },
+        // each picture takes a colour c: c.m is the main colour, c.d a darker shade of it
+        party: { name: '🎉 Party hat', col: 'sky', svg: c => `<g ${HO}><polygon points="70,30 92,30 81,2" fill="${c.m}"/>
+          <path d="M73.4 22 H88.6 M76.8 13 H85.2" stroke="#fff" stroke-opacity=".85" stroke-width="4"/>
+          <polygon points="70,30 92,30 81,2" fill="none"/><circle cx="81" cy="3" r="4.5" fill="${c.d}"/></g>` },
+        crown: { name: '👑 Crown', col: 'yellow', svg: c => `<g ${HO}><path d="M67 31 L67 14 L74 22 L81 9 L88 22 L95 14 L95 31 Z" fill="${c.m}"/>
+          <path d="M68 27 H94" stroke="${c.d}" stroke-width="2"/>
+          <circle cx="81" cy="22" r="2.8" fill="#E64B5D"/><circle cx="72.5" cy="23" r="2.2" fill="#4E95EE"/><circle cx="89.5" cy="23" r="2.2" fill="#62C46A"/></g>` },
+        tophat: { name: '🎩 Top hat', col: 'black', svg: c => `<g ${HO}><rect x="70" y="5" width="22" height="23" rx="2" fill="${c.m}"/>
+          <rect x="70" y="20" width="22" height="5" fill="${c.band}"/><ellipse cx="81" cy="28" rx="18" ry="4" fill="${c.m}"/></g>` },
+        flowers: { name: '🌸 Flowers', col: 'pink', svg: c => `<path d="M58 40 Q81 18 104 40" fill="none" stroke="#62C46A" stroke-width="2.5"/>
+          ${flower(59, 38, c.m)}${flower(69, 29, '#fff')}${flower(81, 25, c.m)}${flower(93, 29, '#fff')}${flower(103, 38, c.m)}` },
+        bow: { name: '🎀 Bow', col: 'pink', svg: c => `<g ${HO}><polygon points="97,22 85,13 86,31" fill="${c.m}"/><polygon points="97,22 109,13 108,31" fill="${c.m}"/>
+          <circle cx="97" cy="22" r="4" fill="${c.d}"/></g>` },
+        beanie: { name: '🧶 Woolly hat', col: 'teal', svg: c => `<g ${HO}><path d="M56 40 Q56 12 81 12 Q106 12 106 40 Z" fill="${c.m}"/>
+          <path d="M66 18 V38 M81 13 V38 M96 18 V38" stroke="${c.d}" stroke-width="2"/>
+          <rect x="54" y="34" width="54" height="9" rx="4" fill="${c.d}"/><circle cx="81" cy="10" r="6" fill="#fff"/></g>` },
       },
     },
     face: {
       label: 'Glasses',
       items: {
-        round: { name: '👓 Round', svg: `<g stroke="#3A3A48" stroke-width="2.2" fill="#fff" fill-opacity=".25">
+        round: { name: '👓 Round', col: 'black', svg: c => `<g stroke="${c.m}" stroke-width="2.4" fill="#fff" fill-opacity=".25">
           <circle cx="72" cy="48" r="7.5"/><circle cx="90" cy="48" r="7.5"/>
           <path d="M79.5 47 Q81 45 82.5 47 M64.5 47 L58 44 M97.5 47 L104 44" fill="none"/></g>` },
-        cool: { name: '🕶️ Cool', svg: `<g stroke="#222" stroke-width="2"><rect x="63.5" y="43" width="16" height="10" rx="4" fill="#222"/>
-          <rect x="82.5" y="43" width="16" height="10" rx="4" fill="#222"/><path d="M79.5 46 H82.5 M63.5 46 L58 44 M98.5 46 L104 44"/>
+        cool: { name: '🕶️ Cool', col: 'black', svg: c => `<g stroke="${c.d}" stroke-width="2"><rect x="63.5" y="43" width="16" height="10" rx="4" fill="${c.m}"/>
+          <rect x="82.5" y="43" width="16" height="10" rx="4" fill="${c.m}"/><path d="M79.5 46 H82.5 M63.5 46 L58 44 M98.5 46 L104 44"/>
           <path d="M66 46 L70 46" stroke="#fff" stroke-opacity=".7" stroke-width="1.6"/><path d="M85 46 L89 46" stroke="#fff" stroke-opacity=".7" stroke-width="1.6"/></g>` },
-        hearts: { name: '💖 Hearts', svg: `<g stroke="#B5305C" stroke-width="1.6"><path d="${heart(72, 47, 1)}" fill="#FF5A8A" fill-opacity=".9"/>
-          <path d="${heart(90, 47, 1)}" fill="#FF5A8A" fill-opacity=".9"/><path d="M78 46 Q81 44 84 46" fill="none"/></g>` },
-        stars: { name: '⭐ Stars', svg: `<g stroke="#C99A2E" stroke-width="1.4"><polygon points="${star(72, 48, 9)}" fill="#FFD166" fill-opacity=".92"/>
-          <polygon points="${star(90, 48, 9)}" fill="#FFD166" fill-opacity=".92"/></g>` },
+        hearts: { name: '💖 Hearts', col: 'pink', svg: c => `<g stroke="${c.d}" stroke-width="1.6"><path d="${heart(72, 47, 1)}" fill="${c.m}" fill-opacity=".92"/>
+          <path d="${heart(90, 47, 1)}" fill="${c.m}" fill-opacity=".92"/><path d="M78 46 Q81 44 84 46" fill="none"/></g>` },
+        stars: { name: '⭐ Stars', col: 'yellow', svg: c => `<g stroke="${c.d}" stroke-width="1.4"><polygon points="${star(72, 48, 9)}" fill="${c.m}" fill-opacity=".92"/>
+          <polygon points="${star(90, 48, 9)}" fill="${c.m}" fill-opacity=".92"/></g>` },
       },
     },
     neck: {
       label: 'Neck',
       items: {
-        scarf: { name: '🧣 Scarf', svg: `<g ${HO}><path d="M88 84 L97 99 L89 100 L82 86 Z" fill="#E64B5D"/>
-          <path d="M57 73 Q81 87 105 73 L104 81 Q81 95 58 81 Z" fill="#F0645A"/>
-          <path d="M66 79 L68 87 M78 82 L79 90 M92 81 L91 89" stroke="#fff" stroke-width="2.5"/></g>` },
-        bowtie: { name: '🎀 Bow tie', svg: `<g ${HO}><polygon points="81,82 69,75 69,89" fill="#4E95EE"/><polygon points="81,82 93,75 93,89" fill="#4E95EE"/>
-          <circle cx="81" cy="82" r="3.5" fill="#2E6FC4"/></g>` },
-        pearls: { name: '📿 Pearls', svg: (() => {
+        scarf: { name: '🧣 Scarf', col: 'red', svg: c => `<g ${HO}><path d="M88 84 L97 99 L89 100 L82 86 Z" fill="${c.d}"/>
+          <path d="M57 73 Q81 87 105 73 L104 81 Q81 95 58 81 Z" fill="${c.m}"/>
+          <path d="M66 79 L68 87 M78 82 L79 90 M92 81 L91 89" stroke="#fff" stroke-opacity=".85" stroke-width="2.5"/></g>` },
+        bowtie: { name: '🎀 Bow tie', col: 'blue', svg: c => `<g ${HO}><polygon points="81,82 69,75 69,89" fill="${c.m}"/><polygon points="81,82 93,75 93,89" fill="${c.m}"/>
+          <circle cx="81" cy="82" r="3.5" fill="${c.d}"/></g>` },
+        pearls: { name: '📿 Pearls', col: 'white', svg: c => {
           let s = '';
           for (let i = 0; i <= 8; i++) {
             const t = i / 8, x = 61 + 40 * t, y = 76 + 14 * t * (1 - t) * 2;
-            s += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.7" fill="#FFFDF7" stroke="#B8B2A8" stroke-width=".9"/>`;
+            s += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.7" fill="${c.m}" stroke="${c.d}" stroke-width=".9"/>`;
           }
           return s;
-        })() },
+        } },
       },
     },
   };
+  // Colours for clothes (band = the stripe on a top hat, so it always shows up)
+  const CLOTH_COLOURS = {
+    red:    { name: 'Red',    m: '#F0645A', d: '#B93A33', band: '#fff' },
+    orange: { name: 'Orange', m: '#F59A3C', d: '#C26E17', band: '#fff' },
+    yellow: { name: 'Yellow', m: '#FFD166', d: '#C99A2E', band: '#E0558F' },
+    green:  { name: 'Green',  m: '#62C46A', d: '#3A8A42', band: '#fff' },
+    teal:   { name: 'Teal',   m: '#5FD3C6', d: '#24887E', band: '#fff' },
+    sky:    { name: 'Sky blue', m: '#7CCBFF', d: '#3A93D6', band: '#fff' },
+    blue:   { name: 'Blue',   m: '#4E7FEE', d: '#2B54B8', band: '#fff' },
+    purple: { name: 'Purple', m: '#A07CF2', d: '#6A45C4', band: '#fff' },
+    pink:   { name: 'Pink',   m: '#FF7EB3', d: '#D24A85', band: '#fff' },
+    black:  { name: 'Black',  m: '#3A3A48', d: '#1E1E28', band: '#E0558F' },
+    white:  { name: 'White',  m: '#FFFDF7', d: '#B8B2A8', band: '#E0558F' },
+  };
   function outfitOf(id) { return (state.outfits && state.outfits[id]) || {}; }
+  // the colour chosen for a slot, or the item's own colour if none has been picked
+  function slotColour(outfit, slot) {
+    const a = ACCESSORIES[slot].items[outfit[slot]];
+    return CLOTH_COLOURS[outfit[slot + 'Col']] ? outfit[slot + 'Col'] : (a ? a.col : 'pink');
+  }
   function outfitSVG(outfit) {
+    if (!outfit) return '';
     // neck first, then glasses, then hat on top
     return ['neck', 'face', 'head'].map(slot => {
-      const a = outfit && outfit[slot] && ACCESSORIES[slot].items[outfit[slot]];
-      return a ? a.svg : '';
+      const a = outfit[slot] && ACCESSORIES[slot].items[outfit[slot]];
+      return a ? a.svg(CLOTH_COLOURS[slotColour(outfit, slot)]) : '';
     }).join('');
   }
 
@@ -903,16 +928,23 @@
       `<button class="acc${!mine[slot] ? ' on' : ''}" data-slot="${slot}" data-acc="">None</button>` +
       Object.entries(group.items).map(([id, a]) =>
         `<button class="acc${mine[slot] === id ? ' on' : ''}" data-slot="${slot}" data-acc="${id}">${a.name}</button>`).join('') +
-      '</div>').join('');
+      '</div>' +
+      // colour choices appear once something is being worn in this slot
+      (mine[slot] && group.items[mine[slot]] ? `<div class="slot cols"><b>Colour</b>` +
+        Object.entries(CLOTH_COLOURS).map(([k, c]) =>
+          `<button class="sw${slotColour(mine, slot) === k ? ' on' : ''}" data-slot="${slot}" data-col="${k}" style="background:${c.m}" aria-label="${c.name}" title="${c.name}"></button>`).join('') +
+        '</div>' : '')).join('');
   }
   $('dress').addEventListener('click', e => {
-    const b = e.target.closest('.acc'); if (!b) return;
+    const b = e.target.closest('.acc, .sw'); if (!b) return;
     state.outfits = state.outfits || {};
-    const o = Object.assign({}, outfitOf(state.ham));
-    o[b.dataset.slot] = b.dataset.acc;
+    const o = Object.assign({}, outfitOf(state.ham)), slot = b.dataset.slot;
+    if (b.dataset.col) o[slot + 'Col'] = b.dataset.col;
+    else { o[slot] = b.dataset.acc; delete o[slot + 'Col']; }   // a new item starts in its own colour
     state.outfits[state.ham] = o; save();
     renderPicker(); drawHamster();
-    if (b.dataset.acc) { squeak(); hearts(2); say(pickRand(['Do I look nice?', 'Ooh, fancy!', 'I love it!', 'So stylish!'])); }
+    if (b.dataset.col) { pop(); say(pickRand(['Ooh, I like that colour!', 'Pretty!', 'So colourful!'])); }
+    else if (b.dataset.acc) { squeak(); hearts(2); say(pickRand(['Do I look nice?', 'Ooh, fancy!', 'I love it!', 'So stylish!'])); }
   });
   $('picker').addEventListener('click', e => {
     const b = e.target.closest('.pick'); if (!b) return;
