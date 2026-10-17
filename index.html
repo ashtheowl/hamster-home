@@ -28,6 +28,25 @@
   }
   h1 { margin: 0; font-size: clamp(28px, 5vw, 42px); color: var(--pink-d); }
   .sub { margin: 2px 0 0; color: var(--soft); font-size: 18px; }
+  /* Coins and the shop */
+  .coinpill { display: inline-block; margin-top: 8px; background: var(--sun); color: #6B4A00; font-weight: 700; font-size: 20px;
+    border-radius: 999px; padding: 4px 16px; box-shadow: 0 3px 0 #E0A21E; }
+  .coinsmall { font-size: 15px; background: var(--sun); color: #6B4A00; border-radius: 999px; padding: 1px 10px; vertical-align: middle; }
+  .coinhint { font-size: 15px; font-weight: 400; color: var(--soft); }
+  .bump { animation: coinbump .5s ease-out; }
+  @keyframes coinbump { 0% { transform: scale(1); } 40% { transform: scale(1.3); } 100% { transform: scale(1); } }
+  .tile { position: relative; }
+  .tile.locked .prev { filter: grayscale(.7); opacity: .65; }
+  .tile .price { position: absolute; top: 3px; right: 3px; background: var(--sun); color: #6B4A00; border-radius: 999px; font-size: 12px; font-weight: 700; padding: 0 6px; }
+  .acc.locked { background: #FFF3C4; border-style: dashed; }
+  .earned { display: inline-block; margin: 6px 0 2px; background: var(--sun); color: #6B4A00; border-radius: 999px; padding: 2px 14px; font-weight: 700; }
+  .buybox { position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 600;
+    width: min(460px, calc(100% - 32px)); background: #fff; border-radius: 20px; box-shadow: 0 10px 40px rgba(60, 30, 20, .35);
+    padding: 14px 16px; display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; justify-content: center; animation: popin .25s ease-out; }
+  .buypic { width: 84px; height: 70px; display: flex; align-items: center; justify-content: center; font-size: 46px; flex: none; }
+  .buypic svg { width: 100%; height: 100%; }
+  .buytext { flex: 1 1 200px; font-size: 17px; }
+  .buytext small { color: var(--soft); font-size: 14px; }
   .wrap {
     max-width: 1180px; margin: 0 auto; padding-block: 14px 40px;
     padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
@@ -467,6 +486,7 @@
 <header>
   <h1>🐹 Belle's Hamster Home</h1>
   <p class="sub">Build a cage, choose your hamster and watch it play!</p>
+  <div class="coinpill" id="coins" title="Your coins">🪙 0</div>
 </header>
 
 <div class="wrap">
@@ -491,7 +511,7 @@
 
   <section class="build">
     <div class="card shelf">
-      <h2>Pet shop shelf</h2>
+      <h2>Pet shop shelf <span class="coinsmall" id="coins2">🪙 0</span></h2>
       <div class="tabs" id="tabs"></div>
       <div class="swatches" id="swatches"></div>
       <div class="tiles" id="tiles"></div>
@@ -516,7 +536,7 @@
   </section>
 
   <section class="card games-card">
-    <h2>Mini games</h2>
+    <h2>Mini games <span class="coinhint">· play to earn 🪙 coins for the shop!</span></h2>
     <div class="games" id="games"></div>
   </section>
 </div>
@@ -529,6 +549,7 @@
 </div>
 
 <div class="ghost" id="ghost" hidden></div>
+<div class="buybox" id="buybox" hidden></div>
 
 <script>
 (() => {
@@ -608,6 +629,18 @@
     banana:   { cat: 'snacks', label: 'Banana', emoji: '🍌', snack: true },
     pear:     { cat: 'snacks', label: 'Pear', emoji: '🍐', snack: true },
     pepper:   { cat: 'snacks', label: 'Sweet pepper', emoji: '🫑', snack: true },
+    // Special things: locked until bought with coins from the mini games
+    balloons: { cat: 'toys', label: 'Balloons', art: 'balloons', price: 15, say: ['Party time! 🎈', 'Pop! Just kidding!'] },
+    telescope:{ cat: 'toys', label: 'Telescope', art: 'telescope', price: 20, say: ['I can see the stars! 🔭', 'Is that the moon?'] },
+    pool:     { cat: 'toys', label: 'Paddling pool', w: 2, h: 1, art: 'pool', price: 25, on: true, say: ['Splish splash! 💦', 'Quack quack!'] },
+    piano:    { cat: 'toys', label: 'Piano', w: 2, h: 1, art: 'piano', price: 30, say: ['La la la! 🎵', 'Plink plonk! 🎶'] },
+    rainbow:  { cat: 'toys', label: 'Rainbow bridge', w: 2, h: 1, art: 'rainbow', price: 35, on: true, say: ['Over the rainbow! 🌈', 'So many colours!'] },
+    ferris:   { cat: 'toys', label: 'Ferris wheel', w: 2, h: 2, art: 'ferris', price: 45, on: true, say: ['Wheee, up high! 🎡', 'I can see the whole cage!'] },
+    carousel: { cat: 'toys', label: 'Carousel', w: 2, h: 2, art: 'carousel', price: 50, on: true, say: ['Round and round! 🎠', 'Giddy up!'] },
+    fountain: { cat: 'furniture', label: 'Fountain', art: 'fountain', price: 20, say: ['Pretty water! ⛲', 'Make a wish!'] },
+    royalbed: { cat: 'homes', label: 'Princess bed', w: 2, h: 1, art: 'royalbed', price: 40, sleep: true },
+    cupcake:  { cat: 'homes', label: 'Cupcake house', w: 2, h: 2, art: 'cupcake', price: 50, inside: true },
+    treehouse:{ cat: 'homes', label: 'Treehouse', w: 2, h: 2, art: 'treehouse', price: 60, inside: true },
   };
 
   const WHEEL = `<svg viewBox="0 0 100 100">
@@ -859,6 +892,90 @@
       <polygon points="8,48 178,48 178,88 8,88" fill="url(#planks)"/><polygon points="178,48 192,30 192,70 178,88" fill="#8C5A2E"/>
       <path d="M120 34 L150 6" stroke="#C9A06A" stroke-width="4" stroke-linecap="round"/><path d="M112 28 L124 40 L118 46 L108 36 Z" fill="#C8CDD6"/>
     </g></svg>`,
+    balloons: `<svg viewBox="0 0 100 100"><g ${S}>
+      <path d="M50 96 Q46 70 32 44 M50 96 Q52 66 54 34 M50 96 Q58 72 72 46" fill="none" stroke="#8A6E5C" stroke-width="1.2"/>
+      <ellipse cx="32" cy="32" rx="14" ry="16" fill="#FF7EB3"/><ellipse cx="72" cy="34" rx="14" ry="16" fill="#7CCBFF"/>
+      <ellipse cx="53" cy="20" rx="15" ry="17" fill="#FFD166"/>
+      <g fill="#fff" fill-opacity=".7" stroke="none"><ellipse cx="27" cy="26" rx="3" ry="5"/><ellipse cx="48" cy="13" rx="3" ry="5"/><ellipse cx="67" cy="28" rx="3" ry="5"/></g>
+    </g></svg>`,
+    telescope: `<svg viewBox="0 0 100 100"><g ${S}>
+      <path d="M50 52 L30 94 M50 52 L70 94 M50 52 V94" stroke="#8C5A2E" stroke-width="4" stroke-linecap="round"/>
+      <g transform="rotate(-28 50 46)"><rect x="18" y="38" width="66" height="16" rx="5" fill="#4E7FEE"/>
+      <rect x="78" y="34" width="12" height="24" rx="4" fill="#FFD166"/><rect x="12" y="41" width="8" height="10" rx="2" fill="#2B54B8"/></g>
+      <polygon points="${star(84, 14, 6)}" fill="#FFD166" stroke="none"/>
+    </g></svg>`,
+    pool: `<svg viewBox="0 0 200 100"><g ${S}>
+      <ellipse cx="100" cy="64" rx="92" ry="30" fill="#3A93D6"/>
+      <ellipse cx="100" cy="56" rx="92" ry="30" fill="#7CCBFF"/>
+      <ellipse cx="100" cy="56" rx="78" ry="21" fill="#BFE6FF" stroke="#3A93D6"/>
+      <path d="M50 54 q10 -5 20 0 t20 0 M110 62 q10 -5 20 0 t20 0" fill="none" stroke="#fff" stroke-width="2.5"/>
+      <ellipse cx="128" cy="48" rx="11" ry="7" fill="#FFD166"/><circle cx="138" cy="40" r="6" fill="#FFD166"/>
+      <path d="M143 40 l6 1 l-6 2 z" fill="#F59A3C"/><circle cx="139" cy="38.5" r="1.2" fill="#2B1B12" stroke="none"/>
+    </g></svg>`,
+    piano: `<svg viewBox="0 0 200 100"><g ${S}>
+      <rect x="24" y="72" width="8" height="24" fill="#2A2A36"/><rect x="168" y="72" width="8" height="24" fill="#2A2A36"/>
+      <rect x="14" y="14" width="172" height="62" rx="8" fill="#3A3A48"/>
+      <rect x="22" y="46" width="156" height="24" fill="#fff"/>
+      <path d="M41.5 46 V70 M61 46 V70 M80.5 46 V70 M100 46 V70 M119.5 46 V70 M139 46 V70 M158.5 46 V70" stroke-width="1"/>
+      <g fill="#2A2A36" stroke="none"><rect x="36" y="46" width="10" height="14"/><rect x="56" y="46" width="10" height="14"/>
+      <rect x="95" y="46" width="10" height="14"/><rect x="114" y="46" width="10" height="14"/><rect x="134" y="46" width="10" height="14"/></g>
+      <text x="100" y="36" font-size="18" text-anchor="middle" fill="#FFD166" stroke="none">♪ ♫ ♪</text>
+    </g></svg>`,
+    rainbow: `<svg viewBox="0 0 200 100"><g fill="none" stroke-width="8">
+      <path d="M14 92 A86 76 0 0 1 186 92" stroke="#F0645A"/><path d="M22 92 A78 68 0 0 1 178 92" stroke="#F59A3C"/>
+      <path d="M30 92 A70 60 0 0 1 170 92" stroke="#FFD166"/><path d="M38 92 A62 52 0 0 1 162 92" stroke="#62C46A"/>
+      <path d="M46 92 A54 44 0 0 1 154 92" stroke="#4E95EE"/><path d="M54 92 A46 36 0 0 1 146 92" stroke="#9B6CF0"/></g>
+      <g fill="#fff" stroke="#C9D6E8" stroke-width="1.5"><circle cx="18" cy="88" r="10"/><circle cx="32" cy="90" r="9"/><circle cx="182" cy="88" r="10"/><circle cx="168" cy="90" r="9"/></g>
+    </svg>`,
+    ferris: `<svg viewBox="0 0 100 100"><g ${S}>
+      <path d="M50 46 L26 96 M50 46 L74 96" stroke="#9B6CF0" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="50" cy="44" r="36" fill="none" stroke="#B79CFF" stroke-width="4"/>
+      <path d="M50 8 V80 M14 44 H86 M24.5 18.5 L75.5 69.5 M75.5 18.5 L24.5 69.5" stroke="#B79CFF" stroke-width="2"/>
+      ${[0, 1, 2, 3, 4, 5, 6, 7].map(i => { const a = i * Math.PI / 4, x = 50 + 36 * Math.cos(a), y = 44 + 36 * Math.sin(a);
+        return `<rect x="${(x - 6).toFixed(1)}" y="${(y - 2).toFixed(1)}" width="12" height="10" rx="3" fill="${['#FF7EB3', '#FFD166', '#7CCBFF', '#62C46A'][i % 4]}"/>`; }).join('')}
+      <circle cx="50" cy="44" r="5" fill="#FFD166"/>
+    </g></svg>`,
+    carousel: `<svg viewBox="0 0 100 100"><g ${S}>
+      <ellipse cx="50" cy="88" rx="42" ry="8" fill="#E0558F"/>
+      <path d="M22 36 V84 M50 36 V86 M78 36 V84" stroke="#FFD166" stroke-width="3"/>
+      <ellipse cx="22" cy="66" rx="9" ry="6" fill="#fff"/><ellipse cx="50" cy="58" rx="9" ry="6" fill="#7CCBFF"/><ellipse cx="78" cy="70" rx="9" ry="6" fill="#B79CFF"/>
+      <polygon points="8,36 50,6 92,36" fill="url(#tentStripes)"/>
+      <path d="M8 36 q7 8 14 0 q7 8 14 0 q7 8 14 0 q7 8 14 0 q7 8 14 0 q7 8 14 0" fill="#FFD166"/>
+      <circle cx="50" cy="6" r="4" fill="#FFD166"/>
+    </g></svg>`,
+    fountain: `<svg viewBox="0 0 100 100"><g ${S}>
+      <path d="M50 30 Q30 30 22 60 M50 30 Q70 30 78 60" fill="none" stroke="#7CCBFF" stroke-width="3"/>
+      <path d="M50 30 V14" stroke="#7CCBFF" stroke-width="3"/><circle cx="50" cy="12" r="4" fill="#BFE6FF" stroke="#7CCBFF"/>
+      <ellipse cx="50" cy="80" rx="42" ry="12" fill="#C9C1D6"/><ellipse cx="50" cy="76" rx="36" ry="8" fill="#7CCBFF"/>
+      <rect x="44" y="40" width="12" height="36" fill="#D5CFE0"/><ellipse cx="50" cy="40" rx="18" ry="5" fill="#D5CFE0"/>
+      <ellipse cx="50" cy="39" rx="13" ry="3" fill="#7CCBFF" stroke="none"/>
+    </g></svg>`,
+    royalbed: `<svg viewBox="0 0 200 100"><g ${S}>
+      <path d="M14 96 V14 M186 96 V14" stroke="#C99A2E" stroke-width="5" stroke-linecap="round"/>
+      <path d="M10 14 Q100 -6 190 14 Q100 30 10 14 Z" fill="#FFB3D1"/>
+      <path d="M14 16 Q24 52 30 60 M186 16 Q176 52 170 60" fill="none" stroke="#FFB3D1" stroke-width="7" stroke-linecap="round"/>
+      <rect x="14" y="58" width="172" height="26" rx="8" fill="#FFD166"/>
+      <rect x="24" y="44" width="152" height="22" rx="10" fill="#FFF8F0"/>
+      <rect x="84" y="40" width="94" height="30" rx="10" fill="url(#gingham)"/>
+      <path d="M52 55 C37 43 44.5 32.5 52 41.5 C59.5 32.5 67 43 52 55Z" fill="#FF7EB3"/><circle cx="100" cy="6" r="5" fill="#FFD166"/>
+    </g></svg>`,
+    cupcake: `<svg viewBox="0 0 100 100"><g ${S}>
+      <polygon points="16,56 84,56 76,94 24,94" fill="url(#tentStripes)"/>
+      <polygon points="16,56 84,56 76,94 24,94" fill="#FF7EB3" fill-opacity=".45" stroke="none"/>
+      <path d="M12 58 Q6 40 24 36 Q22 18 44 20 Q50 6 62 18 Q82 14 80 34 Q96 40 88 58 Z" fill="#FFF0F6"/>
+      <g stroke="none"><rect x="30" y="34" width="5" height="2.5" rx="1" fill="#F0645A" transform="rotate(30 32 35)"/><rect x="52" y="28" width="5" height="2.5" rx="1" fill="#4E95EE"/>
+      <rect x="66" y="40" width="5" height="2.5" rx="1" fill="#62C46A" transform="rotate(-30 68 41)"/><rect x="42" y="44" width="5" height="2.5" rx="1" fill="#FFD166"/></g>
+      <circle cx="56" cy="12" r="6" fill="#E64B5D"/><path d="M56 6 q4 -6 8 -6" fill="none"/>
+      <path d="M40 94 V78 Q50 66 60 78 V94 Z" fill="#6B3E1F"/>
+    </g></svg>`,
+    treehouse: `<svg viewBox="0 0 100 100"><g ${S}>
+      <rect x="42" y="44" width="16" height="52" fill="url(#bark)"/>
+      <circle cx="30" cy="26" r="20" fill="#62C46A"/><circle cx="70" cy="24" r="22" fill="#62C46A"/><circle cx="50" cy="14" r="16" fill="#7DD07F"/>
+      <rect x="22" y="40" width="56" height="28" fill="url(#planks)"/>
+      <polygon points="18,42 50,26 82,42" fill="#E2705C"/>
+      <path d="M44 68 V52 Q50 46 56 52 V68 Z" fill="#3A2210"/><rect x="28" y="48" width="10" height="9" fill="#BFE6FF"/>
+      <path d="M68 68 V96 M76 68 V96 M68 76 H76 M68 84 H76 M68 92 H76" stroke="#8C5A2E" stroke-width="2.5"/>
+    </g></svg>`,
     ladder: `<svg viewBox="0 0 100 200"><g ${S}>
       <rect x="16" y="6" width="13" height="188" rx="5" fill="url(#woodG)"/>
       <rect x="71" y="6" width="13" height="188" rx="5" fill="url(#woodG)"/>
@@ -927,6 +1044,14 @@
           <rect x="70" y="20" width="22" height="5" fill="${c.band}"/><ellipse cx="81" cy="28" rx="18" ry="4" fill="${c.m}"/></g>` },
         flowers: { name: '🌸 Flowers', col: 'pink', svg: c => `<path d="M58 40 Q81 18 104 40" fill="none" stroke="#62C46A" stroke-width="2.5"/>
           ${flower(59, 38, c.m)}${flower(69, 29, '#fff')}${flower(81, 25, c.m)}${flower(93, 29, '#fff')}${flower(103, 38, c.m)}` },
+        pirate: { name: '🏴‍☠️ Pirate hat', col: 'black', price: 25, svg: c => `<g ${HO}><path d="M56 32 Q81 0 106 32 Q81 22 56 32 Z" fill="${c.m}"/>
+          <path d="M60 30 Q81 22 102 30" fill="none" stroke="#FFD166" stroke-width="2"/></g>
+          <circle cx="81" cy="18" r="4.5" fill="#fff"/><circle cx="79.5" cy="17.5" r="1" fill="#222"/><circle cx="82.5" cy="17.5" r="1" fill="#222"/>
+          <path d="M75 24 L87 28 M87 24 L75 28" stroke="#fff" stroke-width="1.8"/>` },
+        astronaut: { name: '👩‍🚀 Space helmet', col: 'white', price: 40, svg: c => `<circle cx="81" cy="49" r="34" fill="#BFE6FF" fill-opacity=".3" stroke="${c.m}" stroke-width="5"/>
+          <circle cx="81" cy="49" r="34" fill="none" stroke="${c.d}" stroke-width="1.2"/>
+          <path d="M60 32 Q66 22 78 20" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" opacity=".9"/>
+          <path d="M81 15 V5" stroke="${c.d}" stroke-width="2"/><circle cx="81" cy="4" r="3.5" fill="#F0645A"/>` },
         cowboy: { name: '🤠 Cowboy hat', col: 'brown', svg: c => `<g ${HO}><ellipse cx="81" cy="27" rx="27" ry="6" fill="${c.m}"/>
           <path d="M68 27 Q67 8 81 11 Q95 8 94 27 Z" fill="${c.m}"/><rect x="68" y="20" width="26" height="4" fill="${c.d}"/></g>` },
         sunhat: { name: '👒 Sun hat', col: 'yellow', svg: c => `<g ${HO}><ellipse cx="81" cy="28" rx="33" ry="7" fill="${c.m}"/>
@@ -1020,6 +1145,14 @@
         cape: { name: '🦸 Cape', col: 'red', svg: c => `<g ${HO}><path d="M66 44 Q42 28 16 44 Q6 62 14 84 Q28 74 40 82 Q50 68 62 70 Z" fill="${c.m}"/>
           <path d="M58 46 Q40 38 24 50 M48 52 Q34 52 22 66" fill="none" stroke="${c.d}" stroke-width="1.6"/>
           <circle cx="64" cy="48" r="3" fill="#FFD166"/></g>` },
+        rainbowwings: { name: '🌈 Rainbow wings', col: 'pink', price: 35, svg: () => `<g stroke="#5A4030" stroke-width="1.4">
+          ${['#F0645A', '#FFD166', '#62C46A', '#4E95EE'].map((col, i) => `<ellipse cx="30" cy="24" rx="${12 - i * 2.6}" ry="${21 - i * 4.4}" fill="${col}" transform="rotate(-30 30 24)"/>`).join('')}
+          ${['#F0645A', '#FFD166', '#62C46A', '#4E95EE'].map((col, i) => `<ellipse cx="45" cy="20" rx="${10 - i * 2.2}" ry="${18 - i * 3.8}" fill="${col}" transform="rotate(15 45 20)"/>`).join('')}</g>` },
+        jetpack: { name: '🚀 Jetpack', col: 'silver', price: 30, svg: c => `<g ${HO}>
+          <polygon points="20,70 26,86 32,70" fill="#F59A3C"/><polygon points="34,70 40,86 46,70" fill="#F59A3C"/>
+          <polygon points="22,70 26,80 30,70" fill="#FFD166" stroke="none"/><polygon points="36,70 40,80 44,70" fill="#FFD166" stroke="none"/>
+          <rect x="18" y="34" width="14" height="36" rx="7" fill="${c.m}"/><rect x="32" y="34" width="14" height="36" rx="7" fill="${c.m}"/>
+          <rect x="18" y="44" width="28" height="6" fill="${c.d}"/></g>` },
         backpack: { name: '🎒 Backpack', col: 'green', svg: c => `<g ${HO}><rect x="18" y="38" width="28" height="30" rx="8" fill="${c.m}"/>
           <rect x="23" y="52" width="18" height="12" rx="4" fill="${c.d}"/><path d="M26 38 Q32 30 38 38" fill="none" stroke="${c.d}" stroke-width="2.5"/></g>` },
       },
@@ -1141,6 +1274,8 @@
   delete state.needs; delete state.happy;
   if (!Array.isArray(state.cage) || !state.cage.length) state.cage = [state.ham];
   if (!Array.isArray(state.poos)) state.poos = [];
+  if (typeof state.coins !== 'number') state.coins = 5;
+  if (!Array.isArray(state.unlocked)) state.unlocked = [];
   function needsOf(id) {
     state.needsBy[id] = Object.assign({ food: 80, drink: 80, sleep: 80, fun: 80 }, state.needsBy[id] || {});
     return state.needsBy[id];
@@ -1229,7 +1364,9 @@
       `<div class="slot"><b>${group.label}</b>` +
       `<button class="acc${!mine[slot] ? ' on' : ''}" data-slot="${slot}" data-acc="">None</button>` +
       Object.entries(group.items).map(([id, a]) =>
-        `<button class="acc${mine[slot] === id ? ' on' : ''}" data-slot="${slot}" data-acc="${id}">${a.name}</button>`).join('') +
+        accLocked(slot, id)
+          ? `<button class="acc locked" data-slot="${slot}" data-buy="${id}">🔒 ${a.name} 🪙${a.price}</button>`
+          : `<button class="acc${mine[slot] === id ? ' on' : ''}" data-slot="${slot}" data-acc="${id}">${a.name}</button>`).join('') +
       '</div>' +
       // colour choices appear once something is being worn in this slot
       (mine[slot] && group.items[mine[slot]] ? `<div class="slot cols"><b>Colour</b>` +
@@ -1237,8 +1374,41 @@
           `<button class="sw${slotColour(mine, slot) === k ? ' on' : ''}" data-slot="${slot}" data-col="${k}" style="background:${c.m}" aria-label="${c.name}" title="${c.name}"></button>`).join('') +
         '</div>' : '')).join('');
   }
+  // ---------- Coins and the shop ----------
+  const isLocked = type => !!DEFS[type].price && !state.unlocked.includes(type);
+  const accLocked = (slot, id) => !!ACCESSORIES[slot].items[id].price && !state.unlocked.includes(`acc:${slot}:${id}`);
+  function renderCoins(bump) {
+    for (const el of [$('coins'), $('coins2')]) {
+      el.textContent = '🪙 ' + state.coins;
+      if (bump) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
+    }
+  }
+  // o is { type } for a cage thing, or { slot, id } for something to wear
+  function openBuy(o) {
+    const thing = o.type ? DEFS[o.type] : ACCESSORIES[o.slot].items[o.id];
+    const key = o.type || `acc:${o.slot}:${o.id}`;
+    const name = o.type ? thing.label : thing.name.replace(/^\S+\s/, '');
+    const pic = o.type ? itemHTML({ type: o.type }) : hamsterSVG(hamDef(), { [o.slot]: o.id });
+    const enough = state.coins >= thing.price;
+    const box = $('buybox');
+    box.innerHTML = `<div class="buypic">${pic}</div>
+      <div class="buytext"><b>${esc(name)}</b><br>${enough
+        ? `Buy it for 🪙 ${thing.price}? You have 🪙 ${state.coins}.`
+        : `Costs 🪙 ${thing.price}. You need 🪙 ${thing.price - state.coins} more!<br><small>Play the mini games 🎮 to earn coins.</small>`}</div>
+      ${enough ? '<button class="btn big" id="buyYes">Yes, buy it!</button>' : ''}<button class="btn" id="buyNo">${enough ? 'Not now' : 'OK'}</button>`;
+    box.hidden = false;
+    $('buyNo').addEventListener('click', () => { box.hidden = true; });
+    if (enough) $('buyYes').addEventListener('click', () => {
+      state.coins -= thing.price; state.unlocked.push(key); save();
+      box.hidden = true; renderCoins(true); renderShelf(); renderDress();
+      beep(700, 1400, 0.15, 0.1); setTimeout(() => beep(1000, 1800, 0.15, 0.1), 160);
+      hearts(3); say(`Ooh, a ${name}! Thank you! 💖`, 2400);
+    });
+  }
+
   $('dress').addEventListener('click', e => {
     const b = e.target.closest('.acc, .sw'); if (!b) return;
+    if (b.dataset.buy) { openBuy({ slot: b.dataset.slot, id: b.dataset.buy }); return; }
     state.outfits = state.outfits || {};
     const o = Object.assign({}, outfitOf(state.ham));
     applyDress(o, b);
@@ -1331,9 +1501,14 @@
     for (const [type, d] of Object.entries(DEFS)) {
       if (d.cat !== shelfCat) continue;
       const t = document.createElement('div');
-      t.className = 'tile' + (selectedShelf === type ? ' on' : '');
-      t.innerHTML = `<div class="prev">${itemHTML({ type, ci: state.tubeColour, rot: 0, paint: state.paint })}</div><div class="lbl">${d.label}</div>`;
-      t.addEventListener('pointerdown', e => startPress(e, { kind: 'shelf', type }));
+      const locked = isLocked(type);
+      t.className = 'tile' + (selectedShelf === type ? ' on' : '') + (locked ? ' locked' : '');
+      t.innerHTML = `<div class="prev">${itemHTML({ type, ci: state.tubeColour, rot: 0, paint: state.paint })}</div><div class="lbl">${d.label}</div>` +
+        (locked ? `<span class="price">🔒 🪙${d.price}</span>` : '');
+      t.addEventListener('pointerdown', e => {
+        if (locked) { e.preventDefault(); openBuy({ type }); return; }   // locked: offer to buy it instead
+        startPress(e, { kind: 'shelf', type });
+      });
       tiles.appendChild(t);
     }
   }
@@ -2019,9 +2194,17 @@
     return { best: state.best[id], isNew: better && old !== undefined };
   }
   const bestText = (b, unit = '') => b.isNew ? ' 🏆 New best!' : ` (Best: ${b.best}${unit})`;
+  // coins earned in a game: at least 2 just for playing, at most 25
+  function earn(n) {
+    n = clamp(Math.round(n), 2, 25);
+    state.coins += n; save(); renderCoins(true); beep(1200, 1800, 0.1, 0.08);
+    return `<div class="earned">🪙 +${n} coins!</div>`;
+  }
   function finishGame(html, again, rewards, extra = '') {
-    Object.entries(rewards || { fun: 15 }).forEach(([k, v]) => addNeed(k, v));
-    $('gmsg').innerHTML = `${html}<br>${extra}<button class="btn big" id="gAgain">Play again 🔁</button> <button class="btn" id="gBack">Back to the cage</button>`;
+    const r = Object.assign({ fun: 15 }, rewards);
+    const coinHTML = earn(r.coins || 0); delete r.coins;
+    Object.entries(r).forEach(([k, v]) => addNeed(k, v));
+    $('gmsg').innerHTML = `${html}<br>${coinHTML}<br>${extra}<button class="btn big" id="gAgain">Play again 🔁</button> <button class="btn" id="gBack">Back to the cage</button>`;
     $('gAgain').addEventListener('click', again);
     $('gBack').addEventListener('click', closeGame);
   }
@@ -2132,7 +2315,8 @@
     if (maze.pos === maze.goal) {
       maze.done = true; maze.goalEl.remove(); munch(); squeak(); confetti();
       addNeed('fun', 20); addNeed('food', 10);
-      $('gmsg').innerHTML = `🎉 Yay! ${esc(nameOf(state.ham))} found the carrot in ${maze.moves} moves${maze.got === 3 ? ' and got ALL the seeds! 🌟' : '!'}<br>
+      const coinHTML = earn(4 + maze.got * 2 + mazeLevel * 2);
+      $('gmsg').innerHTML = `🎉 Yay! ${esc(nameOf(state.ham))} found the carrot in ${maze.moves} moves${maze.got === 3 ? ' and got ALL the seeds! 🌟' : '!'}<br>${coinHTML}<br>
         <button class="btn big" id="mzNext">Next maze ➡️</button> <button class="btn" id="mzBack">Back to the cage</button>`;
       $('mzNext').addEventListener('click', () => { mazeLevel++; startMaze(); });
       $('mzBack').addEventListener('click', closeGame);
@@ -2197,7 +2381,7 @@
       addNeed('fun', 15); addNeed('sleep', -5);
       if (place === 1) { confetti(); squeak(); }
       $('tapRun').disabled = true;
-      $('gmsg').innerHTML = `${msg}<br><button class="btn big" id="raceAgain">Race again 🔁</button> <button class="btn" id="raceBack">Back to the cage</button>`;
+      $('gmsg').innerHTML = `${msg}<br>${earn([15, 10, 6, 3][place - 1])}<br><button class="btn big" id="raceAgain">Race again 🔁</button> <button class="btn" id="raceBack">Back to the cage</button>`;
       $('raceAgain').addEventListener('click', startRace);
       $('raceBack').addEventListener('click', closeGame);
     }
@@ -2269,7 +2453,7 @@
       items.forEach(i => i.el.remove());
       const b = bestScore('catch', score);
       if (score >= 20) confetti();
-      finishGame(`🎉 You caught <b>${score}</b> points of seeds!${bestText(b)}`, startCatch, { fun: 15, food: 15 });
+      finishGame(`🎉 You caught <b>${score}</b> points of seeds!${bestText(b)}`, startCatch, { fun: 15, food: 15, coins: score / 2 });
     }
   }
 
@@ -2314,7 +2498,7 @@
     function end() {
       const b = bestScore('cheeks', score);
       if (score >= 15) confetti();
-      finishGame(`🎉 ${esc(nameOf(state.ham))} stuffed <b>${score}</b> snacks and hid them in the burrow!${bestText(b)}`, startCheeks, { fun: 15, food: 20 });
+      finishGame(`🎉 ${esc(nameOf(state.ham))} stuffed <b>${score}</b> snacks and hid them in the burrow!${bestText(b)}`, startCheeks, { fun: 15, food: 20, coins: score / 2 });
     }
   }
 
@@ -2359,7 +2543,7 @@
         arena.querySelectorAll('.hole').forEach(h => h.classList.remove('up'));
         const b = bestScore('burrow', score);
         if (score >= 20) confetti();
-        finishGame(`🎉 You scored <b>${score}</b>!${bestText(b)}`, startBurrow);
+        finishGame(`🎉 You scored <b>${score}</b>!${bestText(b)}`, startBurrow, { coins: score / 2 });
       });
     });
   }
@@ -2388,7 +2572,7 @@
         if (pairs === 8) {
           confetti();
           const best = bestScore('memory', moves, false);
-          finishGame(`🎉 You found all the pairs in <b>${moves}</b> moves!${bestText(best, ' moves')}`, startMemory);
+          finishGame(`🎉 You found all the pairs in <b>${moves}</b> moves!${bestText(best, ' moves')}`, startMemory, { coins: 26 - moves });
         }
       } else {
         lock = true;
@@ -2436,7 +2620,7 @@
       const s = Math.floor(inZone), stars = s >= 20 ? ' ⭐⭐⭐' : s >= 12 ? ' ⭐⭐' : s >= 5 ? ' ⭐' : '';
       const b = bestScore('wheel', s);
       if (s >= 20) confetti();
-      finishGame(`🎉 You kept it just right for <b>${s}</b> seconds!${stars}${bestText(b, ' s')}`, startWheelGame, { fun: 20, sleep: -5 });
+      finishGame(`🎉 You kept it just right for <b>${s}</b> seconds!${stars}${bestText(b, ' s')}`, startWheelGame, { fun: 20, sleep: -5, coins: s / 1.5 });
     }
   }
 
@@ -2511,7 +2695,7 @@
     function end() {
       const b = bestScore('ball', score);
       if (score >= 20) confetti();
-      finishGame(`🎉 You collected <b>${score}</b> seeds!${bestText(b)}`, startBall, { fun: 20, food: 10 });
+      finishGame(`🎉 You collected <b>${score}</b> seeds!${bestText(b)}`, startBall, { fun: 20, food: 10, coins: score / 1.5 });
     }
   }
 
@@ -2541,7 +2725,7 @@
         } else {
           confetti();
           const best = bestScore('seek', looks, false);
-          finishGame(`🎉 You found ${esc(nameOf(state.ham))} 3 times in <b>${looks}</b> looks!${bestText(best, ' looks')}`, () => startSeek(1, 0));
+          finishGame(`🎉 You found ${esc(nameOf(state.ham))} 3 times in <b>${looks}</b> looks!${bestText(best, ' looks')}`, () => startSeek(1, 0), { coins: 24 - looks });
         }
       } else {
         b.classList.add('looked');
@@ -2576,7 +2760,11 @@
       <p class="gmsg" id="gmsg"></p>`;
     const draw = () => { $('fsHam').innerHTML = hamsterSVG(hamDef(), o); $('fsPick').innerHTML = dressHTML(o); };
     draw();
-    $('fsPick').addEventListener('click', e => { const b = e.target.closest('.acc, .sw'); if (!b) return; applyDress(o, b); pop(); draw(); });
+    $('fsPick').addEventListener('click', e => {
+      const b = e.target.closest('.acc, .sw'); if (!b) return;
+      if (b.dataset.buy) { openBuy({ slot: b.dataset.slot, id: b.dataset.buy }); return; }
+      applyDress(o, b); pop(); draw();
+    });
     $('walk').addEventListener('click', () => {
       $('walk').disabled = true; $('fsPick').hidden = true;
       $('fsHam').classList.add('strut'); squeak();
@@ -2596,7 +2784,7 @@
         if (avg >= 4.5) { confetti(); squeak(); }
         const b = bestScore('fashion', total);
         const msg = avg >= 4.5 ? '🌟 Superstar! The crowd goes wild!' : avg >= 3 ? '👏 What a lovely outfit!' : '😊 Nice try! Try matching the theme a bit more.';
-        finishGame(`${msg} <b>${total}</b> stars out of 15!${bestText(b, ' stars')}`, startFashion, { fun: 15 },
+        finishGame(`${msg} <b>${total}</b> stars out of 15!${bestText(b, ' stars')}`, startFashion, { fun: 15, coins: total },
           '<button class="btn" id="gKeep">💾 Keep this outfit</button> ');
         $('gKeep').addEventListener('click', () => {
           state.outfits = state.outfits || {}; state.outfits[state.ham] = Object.assign({}, o); save();
@@ -2624,7 +2812,7 @@
 
   // ---------- Start ----------
   syncHerd();
-  renderPicker(); drawHamster(); renderShelf(); renderItems(); renderPoos(); updateHelp(); renderSound();
+  renderPicker(); drawHamster(); renderShelf(); renderItems(); renderPoos(); updateHelp(); renderSound(); renderCoins();
   setNight(!!state.night, false);
   herd.forEach(h => setTimeout(() => h.say(`Hi, I'm ${nameOf(h.id)}!`), 600 + Math.random() * 900));
 })();
