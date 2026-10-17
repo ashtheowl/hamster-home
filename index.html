@@ -173,6 +173,14 @@
   .sw.orig, .toolbar .sw.orig:hover { background: conic-gradient(#F0645A, #F4CF3A, #62C46A, #4E95EE, #9B6CF0, #F0645A); }
   .item.sel { outline: 3px dashed var(--teal); outline-offset: 1px; border-radius: 6px; z-index: 3; }
   .item.lifted { opacity: .25; }
+  /* Paused: everything in the cage stands still under a see-through cover */
+  .pauseveil { position: absolute; inset: 0; z-index: 45; border: none; cursor: pointer; font: inherit; color: #fff;
+    background: rgba(60, 40, 90, .55); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+    font-size: clamp(18px, 3.4vw, 28px); font-weight: 700; text-shadow: 0 2px 0 rgba(0, 0, 0, .25); padding: 16px; text-align: center; }
+  .pauseveil .pv-big { font-size: clamp(40px, 9vw, 72px); }
+  .pauseveil .pv-small { font-size: clamp(14px, 2.2vw, 18px); font-weight: 500; }
+  .cage.paused *, .cage.paused *::after { animation-play-state: paused !important; }
+  .cage.paused .pauseveil, .cage.paused .pauseveil * { animation-play-state: running !important; }
   .poo { position: absolute; z-index: 4; transform: translate(-50%, -50%); font-size: calc(var(--cell) * .52); line-height: 1; padding: 4px;
     cursor: pointer; animation: popin .3s ease-out; filter: drop-shadow(0 2px 1px rgba(90, 55, 20, .35)); }
   .poo:hover { transform: translate(-50%, -50%) scale(1.2); }
@@ -525,12 +533,14 @@
         <div class="preview" id="preview" hidden></div>
         <div class="sky" id="sky"><span class="moon">🌙</span></div>
         <div class="toolbar" id="toolbar" hidden></div>
+        <button class="pauseveil" id="pauseveil" hidden><span class="pv-big">⏸️</span><span id="pauseText">Paused</span><span class="pv-small">Tap to carry on playing ▶️</span></button>
       </div>
       <p class="help" id="help"></p>
       <div class="cage-actions">
         <button class="btn" id="clear">🧹 Empty the cage</button>
         <button class="btn" id="sound">🔊 Sound on</button>
         <button class="btn" id="daynight">🌙 Make it night</button>
+        <button class="btn big" id="pause">⏸️ Pause</button>
       </div>
     </div>
   </section>
@@ -1468,6 +1478,7 @@
     $('happyText').textContent = lowV < 30 ? `${low.low} ${nameOf(state.ham)} needs you!`
       : clean < 50 ? 'Eww! The cage needs cleaning! 💩' : avg < 75 ? 'Happy!' : 'Super happy!';
     if (clean < 50 && lowV >= 20) $('face').textContent = '😖';
+    if (paused) $('happyText').textContent = '⏸️ Paused. Nothing goes down while you\'re away.';
     herd.forEach(h => {
       const hn = needsOf(h.id), l = lowestOf(hn);
       h.setNeedIcon(hn[l.k] < 30 ? l.ask : '');
@@ -1476,6 +1487,7 @@
   function addNeedFor(id, k, n) { const needs = needsOf(id); needs[k] = clamp(needs[k] + n, 0, 100); renderNeeds(); save(); }
   function addNeed(k, n) { addNeedFor(state.ham, k, n); }   // mini games reward the chosen hamster
   setInterval(() => {
+    if (paused) return;   // nothing goes down while the game is paused
     herd.forEach(h => {
       const needs = needsOf(h.id);
       for (const k in DECAY) {
@@ -1833,7 +1845,27 @@
   }
   $('daynight').addEventListener('click', () => setNight(!state.night, true));
   // day lasts 3 minutes and night 2 minutes, then it changes by itself
-  setInterval(() => { cycleSecs += 10; if (cycleSecs >= (state.night ? 120 : 180)) setNight(!state.night, true); }, 10000);
+  setInterval(() => { if (paused) return; cycleSecs += 10; if (cycleSecs >= (state.night ? 120 : 180)) setNight(!state.night, true); }, 10000);
+
+  // ---------- Pause ----------
+  // Pausing stops the bars going down, the hamsters wandering, new poo and day/night changing.
+  // It also happens by itself if the game is hidden (another app, screen off) or nobody touches it for 3 minutes.
+  let paused = false, lastActive = Date.now();
+  function setPaused(p, why) {
+    paused = p;
+    cage.classList.toggle('paused', p);
+    $('pauseveil').hidden = !p;
+    $('pause').textContent = p ? '▶️ Play' : '⏸️ Pause';
+    $('pauseText').textContent = why === 'idle' ? 'We paused while you were away 😴'
+      : why === 'away' ? 'Paused while you were gone 😴' : 'Paused. Your hamsters will wait for you!';
+    if (!p) { lastActive = Date.now(); say(pickRand(['Yay, you\'re back! 💖', 'Hello again!', 'Let\'s play!']), 2000); }
+    renderNeeds();
+  }
+  $('pause').addEventListener('click', () => setPaused(!paused, 'button'));
+  $('pauseveil').addEventListener('click', e => { e.stopPropagation(); setPaused(false); });
+  ['pointerdown', 'keydown'].forEach(t => document.addEventListener(t, () => { lastActive = Date.now(); }, true));
+  document.addEventListener('visibilitychange', () => { if (document.hidden && !paused) setPaused(true, 'away'); });
+  setInterval(() => { if (!paused && !gameKind && Date.now() - lastActive > 3 * 60 * 1000) setPaused(true, 'idle'); }, 10000);
 
   // ---------- The hamsters come alive ----------
   // Each hamster in the cage is made by makeHamster: its own picture, position, timers and needs.
@@ -1972,6 +2004,7 @@
   }
 
   function nextAction() {
+    if (paused) { schedule(1000); return; }   // stay put while paused
     resetMood();
     // a messy cage gets complained about
     if (state.poos.length >= 4 && Math.random() < 0.2) {
@@ -1981,7 +2014,12 @@
     }
     // Look after the most important need first
     const need = lowestNeed(), v = N()[need.k];
-    if (v < 40) { if (!tryNeed(need.k)) askFor(need.k); return; }
+    if (v < 40) {
+      // sort out the lowest need it can; only ask Belle if nothing in the cage helps with any of them
+      const low = NEEDS.filter(n => N()[n.k] < 40).sort((a, b) => N()[a.k] - N()[b.k]);
+      for (const n of low) if (tryNeed(n.k)) return;
+      askFor(need.k); return;
+    }
     if (v < 75 && Math.random() < 0.5 && tryNeed(need.k)) return;
 
     const snacks = ofKind(d => d.snack), wheels = ofKind(d => d.svg === 'wheel');
