@@ -148,6 +148,8 @@
   .sw.orig, .toolbar .sw.orig:hover { background: conic-gradient(#F0645A, #F4CF3A, #62C46A, #4E95EE, #9B6CF0, #F0645A); }
   .item.sel { outline: 3px dashed var(--teal); outline-offset: 1px; border-radius: 6px; z-index: 3; }
   .item.lifted { opacity: .25; }
+  .item.held { z-index: 6; animation: wiggle .18s ease-in-out infinite alternate; cursor: grabbing; }
+  @keyframes wiggle { from { transform: scale(1.1) rotate(-4deg); } to { transform: scale(1.1) rotate(4deg); } }
   .item.new { animation: popin .35s ease-out; }
   .item.eaten { animation: eaten .45s forwards; }
   .emoji { font-size: calc(var(--cell) * .78 * var(--s, 1)); line-height: 1; }
@@ -973,7 +975,7 @@
   const hamDef = () => HAMSTERS.find(h => h.id === state.ham) || HAMSTERS[0];
   const nameOf = id => (state.names[id] || '').trim() || HAMSTERS.find(h => h.id === id).name;
 
-  let shelfCat = 'tubes', selectedShelf = null, selectedId = null, spinningId = null, paintOpen = false;
+  let shelfCat = 'tubes', selectedShelf = null, selectedId = null, spinningId = null, paintOpen = false, heldId = null;
 
   // Some things changed size, so keep older saved cages inside the walls
   for (const it of state.items) {
@@ -1148,7 +1150,7 @@
   function updateHelp() {
     $('help').textContent = selectedShelf
       ? `👆 Tap in the cage to add the ${DEFS[selectedShelf].label.toLowerCase()}. Tap it on the shelf again when you're finished.`
-      : '🖱️ Drag things from the shelf into the cage, or tap one and then tap the cage. Tap something in the cage to paint it 🎨. Tap an empty bowl or bottle to fill it up!';
+      : '👆 Tap something in the cage and your hamster will go to it! ✋ Hold your finger on something until it wiggles, then drag it to move it, or into the bin to throw it away. Hold and let go to paint 🎨 or turn it.';
   }
 
   // ---------- Cage items ----------
@@ -1157,7 +1159,7 @@
     for (const it of state.items) {
       const [w, h] = sizeOfType(it.type);
       const el = document.createElement('div');
-      el.className = 'item' + (it.id === selectedId ? ' sel' : '') + (it.id === spinningId ? ' spin' : '') +
+      el.className = 'item' + (it.id === selectedId ? ' sel' : '') + (it.id === spinningId ? ' spin' : '') + (it.id === heldId ? ' held' : '') +
         (DEFS[it.type].refill && fillOf(it) <= 0.02 ? ' empty' : '');
       el.dataset.id = it.id;
       Object.assign(el.style, { left: pct(it.c, COLS), top: pct(it.r, ROWS), width: pct(w, COLS), height: pct(h, ROWS) });
@@ -1249,6 +1251,19 @@
     if (e.button) return;
     e.preventDefault();
     press = { x: e.clientX, y: e.clientY, info, dragging: false };
+    // things in the cage need a short hold before they can be picked up (a quick tap sends the hamster)
+    if (info.kind === 'placed') {
+      // keep following this finger even if the cage pictures get redrawn underneath it
+      try { cage.setPointerCapture(e.pointerId); } catch (err) {}
+      const mine = press;
+      mine.holdT = setTimeout(() => {
+        if (press !== mine) return;
+        mine.held = true; heldId = info.id;
+        const el = itemEl(info.id); if (el) el.classList.add('held');
+        beep(500, 820, 0.06, 0.08);
+        try { if (navigator.vibrate) navigator.vibrate(25); } catch (err) {}
+      }, 380);
+    }
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
     window.addEventListener('pointercancel', onCancel);
@@ -1269,7 +1284,7 @@
     ghost.style.width = cp * p.size[0] + 'px';
     ghost.style.height = cp * p.size[1] + 'px';
     ghost.hidden = false;
-    if (p.info.kind === 'placed') { const el = itemEl(it.id); if (el) el.classList.add('lifted'); }
+    if (p.info.kind === 'placed') { heldId = null; const el = itemEl(it.id); if (el) { el.classList.remove('held'); el.classList.add('lifted'); } }
     cage.classList.add('placing');
     selectedId = null; renderToolbar();
     return true;
@@ -1277,7 +1292,13 @@
   function onMove(e) {
     if (!press) return;
     if (!press.dragging) {
-      if (Math.hypot(e.clientX - press.x, e.clientY - press.y) < 7) return;
+      const moved = Math.hypot(e.clientX - press.x, e.clientY - press.y);
+      if (press.info.kind === 'placed' && !press.held) {
+        // moved before the hold finished: that's not a pick-up (or a tap)
+        if (moved > 12) { clearTimeout(press.holdT); press.cancelled = true; }
+        return;
+      }
+      if (moved < 7) return;
       if (!beginDrag()) return;
     }
     ghost.style.left = e.clientX + 'px';
@@ -1295,16 +1316,29 @@
   }
   function onCancel() {
     stopListening();
-    if (press && press.dragging) { endDragVisuals(); renderItems(); }
+    if (press) clearTimeout(press.holdT);
+    if (press && (press.dragging || press.held)) { heldId = null; endDragVisuals(); renderItems(); }
     press = null;
   }
   function onUp(e) {
     stopListening();
     const p = press; press = null;
     if (!p) return;
+    clearTimeout(p.holdT);
     if (!p.dragging) {
-      if (p.info.kind === 'shelf') toggleShelf(p.info.type);
-      return; // taps on placed things are handled by the cage click below
+      if (p.info.kind === 'shelf') { toggleShelf(p.info.type); return; }
+      // a thing in the cage was tapped, or held and let go
+      const wasHeld = p.held;
+      heldId = null;
+      if (selectedShelf) { if (wasHeld) renderItems(); return; }   // the cage click adds the new thing here
+      justDragged = true; setTimeout(() => { justDragged = false; }, 80);
+      const it = findItem(p.info.id);
+      if (!it || p.cancelled) { renderItems(); return; }
+      if (wasHeld) { selectedId = it.id; paintOpen = false; renderItems(); return; }   // show paint / turn / bin
+      selectedId = null; renderItems();
+      if (DEFS[it.type].refill && fillOf(it) <= 0.02) { refill(it); return; }   // empty bowl or bottle: fill it
+      commandTo(it);
+      return;
     }
     justDragged = true; setTimeout(() => { justDragged = false; }, 80);
     endDragVisuals();
@@ -1330,12 +1364,8 @@
       if (cell) addItem(selectedShelf, cell);
       return;
     }
-    const el = e.target.closest('.item');
-    const it = el && findItem(+el.dataset.id);
-    // tapping an empty bowl or bottle fills it straight away
-    if (it && DEFS[it.type].refill && fillOf(it) <= 0.02) { selectedId = null; refill(it); return; }
-    selectedId = it ? it.id : null;
-    paintOpen = false;
+    if (e.target.closest('.item')) return;   // taps on things are handled when the finger lifts
+    selectedId = null; paintOpen = false;
     renderItems();
   });
   document.addEventListener('keydown', e => {
@@ -1461,6 +1491,27 @@
     }
     return false;
   }
+  // Belle tapped something: the hamster stops what it's doing and goes to use it
+  function commandTo(it) {
+    const d = DEFS[it.type];
+    clearTimeout(actTimer); resetMood();
+    if (spinningId) { spinningId = null; renderItems(); }
+    squeak(); say(pickRand(['Okay!', 'On my way!', 'Coming!', 'Yes please!']), 1100);
+    if (d.snack) return goBeside(it, () => eat(it.id));
+    if (d.refill === 'food') return goBeside(it, () => eatBowl(it.id));
+    if (d.refill === 'drink') return goBeside(it, () => drinkWater(it.id));
+    if (d.svg === 'wheel') return goOnto(it, () => runWheel(it.id));
+    if (d.inside) return goOnto(it, () => { hide(); say(it.type === 'log' ? 'Peekaboo!' : 'Home sweet home! 🏠', 2600); });
+    if (d.sleep) return goOnto(it, nap);
+    if (d.tube) {
+      const path = findTubePath(it.c + ',' + it.r);
+      if (path) return runTubes(path);
+      return goOnto(it, () => { say('Join this tube to another one!', 2600); schedule(2500); });
+    }
+    if (d.say) return (d.on ? goOnto : goBeside)(it, () => play(it));
+    goBeside(it, () => { say("Ooh, what's this?"); schedule(1500); });
+  }
+
   function askFor(k) {
     const has = refill => state.items.some(it => DEFS[it.type].refill === refill);
     const lines = {
@@ -1529,14 +1580,14 @@
     return out;
   }
   // Finds a route through joined-up tubes (at least 2 pieces long)
-  function findTubePath() {
+  function findTubePath(start) {
     const m = tubeMap();
     const joined = [...m.keys()].filter(k => tubeLinks(m, k).length);
-    if (!joined.length) return null;
+    if (!joined.length || (start && !joined.includes(start))) return null;
     const ends = joined.filter(k => tubeLinks(m, k).length === 1);
     let best = null;
     for (let t = 0; t < 6; t++) {
-      let cur = pickRand(ends.length ? ends : joined);
+      let cur = start || pickRand(ends.length ? ends : joined);
       const path = [cur], seen = new Set(path);
       while (path.length < 40) {
         const next = tubeLinks(m, cur).filter(k => !seen.has(k));
