@@ -1,0 +1,1694 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Belle's Hamster Home</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FFF6EC; --card: #FFFFFF; --ink: #4A3426; --soft: #8A6E5C;
+    --pink: #FF7EB3; --pink-d: #E0558F; --teal: #2FB8A9; --sun: #FFD166; --line: #F0DCC8;
+    --cell: 50px;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: 'Fredoka', system-ui, 'Segoe UI', sans-serif;
+    -webkit-user-select: none; user-select: none;
+  }
+  input { user-select: text; -webkit-user-select: text; }
+  header {
+    text-align: center; padding-block: 16px 0;
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  h1 { margin: 0; font-size: clamp(28px, 5vw, 42px); color: var(--pink-d); }
+  .sub { margin: 2px 0 0; color: var(--soft); font-size: 18px; }
+  .wrap {
+    max-width: 1180px; margin: 0 auto; padding-block: 14px 40px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .top > *, .build > * { min-width: 0; }
+  @media (prefers-reduced-motion: reduce) {
+    .twinkle, .needicon, .item.empty::after, .need.low span:first-child { animation: none !important; }
+  }
+  .card { background: var(--card); border-radius: 22px; padding: 14px 16px; box-shadow: 0 4px 0 var(--line); }
+  h2 { margin: 0 0 10px; font-size: 21px; }
+  .small { font-size: 15px; color: var(--soft); margin: 6px 0 0; }
+
+  /* Top row */
+  .top { display: grid; grid-template-columns: 1fr 280px; gap: 16px; }
+  .picker { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 6px; }
+  .pick {
+    flex: 0 0 auto; width: 96px; border: 3px solid transparent; background: #FFF1E2;
+    border-radius: 16px; padding: 6px 6px 4px; cursor: pointer; font: inherit; color: inherit;
+    transition: transform .15s;
+  }
+  .pick:hover { transform: translateY(-2px); }
+  .pick svg { width: 74px; height: 62px; display: block; margin: 0 auto; }
+  .pick span { font-size: 15px; display: block; }
+  .pick.on { border-color: var(--pink); background: #FFE3EF; }
+  .namerow { display: flex; align-items: center; gap: 10px; margin-top: 10px; font-size: 18px; }
+  .namerow input {
+    font: inherit; font-size: 19px; padding: 6px 12px; border-radius: 12px;
+    border: 2px solid var(--line); width: 220px; max-width: 100%; color: var(--ink);
+  }
+  .namerow input:focus { outline: none; border-color: var(--pink); }
+  .dress { margin-top: 12px; border-top: 2px dashed var(--line); padding-top: 8px; }
+  .dress h3 { margin: 0 0 2px; font-size: 18px; }
+  .slot { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .slot b { width: 70px; font-size: 15px; font-weight: 600; }
+  .acc { font: inherit; font-size: 14px; border: 2px solid var(--line); background: #FFF8F0; border-radius: 999px; padding: 3px 10px; cursor: pointer; color: inherit; }
+  .acc:hover { background: #FFE3EF; }
+  .acc.on { border-color: var(--pink); background: #FFE3EF; font-weight: 600; }
+  .happy { text-align: center; }
+  .face { font-size: 46px; line-height: 1; }
+  .meter { height: 22px; border-radius: 999px; background: #FFE9D6; overflow: hidden; margin-top: 8px; }
+  .meter i { display: block; height: 100%; width: 60%; background: linear-gradient(90deg, #FFB3D1, var(--pink)); transition: width .4s; border-radius: 999px; }
+  #happyText { font-weight: 600; color: var(--ink); font-size: 17px; }
+  .needs { display: grid; gap: 6px; margin-top: 8px; text-align: left; }
+  .need { display: grid; grid-template-columns: 26px 64px 1fr; align-items: center; gap: 6px; font-size: 15px; }
+  .need .meter { margin: 0; height: 16px; }
+  .need.low .meter i { background: linear-gradient(90deg, #FF8A80, #FF5A5A); }
+  .need.low span:first-child { animation: bounce .6s ease-in-out infinite alternate; display: inline-block; }
+  .needicon {
+    position: absolute; right: -24%; top: 0; z-index: 2; pointer-events: none;
+    background: #fff; border: 2px solid #FF5A5A; border-radius: 50%;
+    width: calc(var(--cell) * .62); height: calc(var(--cell) * .62);
+    display: flex; align-items: center; justify-content: center; font-size: calc(var(--cell) * .36);
+    animation: bounce .7s ease-in-out infinite alternate;
+  }
+  @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-25%); } }
+
+  /* Build row */
+  .build { display: grid; grid-template-columns: 330px 1fr; gap: 16px; margin-top: 16px; align-items: start; }
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .tab { font: inherit; font-size: 16px; border: none; border-radius: 999px; padding: 6px 12px; background: #FFF1E2; cursor: pointer; color: inherit; }
+  .tab.on { background: var(--teal); color: #fff; }
+  .swatches { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; font-size: 15px; }
+  .sw { width: 32px; height: 32px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 0 2px var(--line); cursor: pointer; padding: 0; }
+  .sw.on { box-shadow: 0 0 0 3px var(--ink); }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; }
+  .tile {
+    background: #FFF8F0; border: 3px solid var(--line); border-radius: 16px; padding: 6px 4px 4px;
+    text-align: center; cursor: grab; touch-action: none; transition: transform .12s;
+  }
+  .tile:hover { transform: translateY(-2px); }
+  .tile.on { border-color: var(--pink); background: #FFE3EF; }
+  .tile .prev { height: 54px; display: flex; align-items: center; justify-content: center; }
+  .tile .prev svg { width: 62px; height: 54px; }
+  .tile .prev .emoji { font-size: 38px; }
+  .tile .lbl { font-size: 14px; margin-top: 2px; }
+  .bin { margin-top: 12px; border: 3px dashed var(--line); border-radius: 16px; padding: 12px; text-align: center; color: var(--soft); transition: .15s; }
+  .bin.hot { border-color: var(--pink-d); background: #FFE3EF; color: var(--pink-d); transform: scale(1.03); }
+
+  /* Cage */
+  .cage {
+    position: relative; width: 100%; aspect-ratio: 3 / 2; border-radius: 18px; overflow: hidden;
+    background-color: #F6E3BF;
+    background-image:
+      radial-gradient(ellipse 4px 1.6px, #E4C384 60%, transparent 70%),
+      radial-gradient(ellipse 3px 1.4px, #FFF4DC 60%, transparent 70%),
+      radial-gradient(#E6C488 1.3px, transparent 1.8px);
+    background-size: 19px 13px, 27px 17px, 11px 11px; background-position: 0 0, 9px 7px, 4px 3px;
+    border: 9px solid var(--pink);
+    box-shadow: 0 6px 0 var(--pink-d), inset 0 0 0 3px rgba(255,255,255,.45),
+      inset 0 calc(var(--cell) * .5) calc(var(--cell) * .9) rgba(120, 70, 20, .28),
+      inset 0 calc(var(--cell) * -.2) calc(var(--cell) * .5) rgba(120, 70, 20, .15);
+  }
+  .cage.placing::before {
+    content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background-image: linear-gradient(rgba(90,64,48,.13) 1px, transparent 1px), linear-gradient(90deg, rgba(90,64,48,.13) 1px, transparent 1px);
+    background-size: calc(100% / 12) calc(100% / 8);
+  }
+  .cage.placing { cursor: copy; }
+  .item { position: absolute; z-index: 2; touch-action: none; cursor: grab; display: flex; align-items: center; justify-content: center; }
+  .item svg { width: 100%; height: 100%; display: block; }
+  .item > svg, .item > .emoji { filter: drop-shadow(0 calc(var(--cell) * .08) calc(var(--cell) * .05) rgba(90, 55, 20, .38)); }
+  .paint { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; filter: var(--pf); }
+  .paint > svg { width: 100%; height: 100%; }
+  .item > .paint { filter: var(--pf) drop-shadow(0 calc(var(--cell) * .08) calc(var(--cell) * .05) rgba(90, 55, 20, .38)); }
+  .tile .prev .paint { width: auto; height: auto; }
+  .item.empty::after {
+    content: '!'; position: absolute; top: -14%; right: -8%; z-index: 5;
+    width: calc(var(--cell) * .5); height: calc(var(--cell) * .5); border-radius: 50%;
+    background: #FF5A5A; color: #fff; border: 2px solid #fff; font-weight: 700; font-size: calc(var(--cell) * .34);
+    display: flex; align-items: center; justify-content: center; animation: bounce .7s ease-in-out infinite alternate;
+  }
+  .sw.orig { background: conic-gradient(#F0645A, #F4CF3A, #62C46A, #4E95EE, #9B6CF0, #F0645A); }
+  .toolbar { flex-wrap: wrap; justify-content: center; max-width: 92%; }
+  .toolbar .sw { width: 36px; height: 36px; margin: 5px 1px; border-radius: 50%; }
+  .sw.orig, .toolbar .sw.orig:hover { background: conic-gradient(#F0645A, #F4CF3A, #62C46A, #4E95EE, #9B6CF0, #F0645A); }
+  .item.sel { outline: 3px dashed var(--teal); outline-offset: 1px; border-radius: 6px; z-index: 3; }
+  .item.lifted { opacity: .25; }
+  .item.new { animation: popin .35s ease-out; }
+  .item.eaten { animation: eaten .45s forwards; }
+  .emoji { font-size: calc(var(--cell) * .78 * var(--s, 1)); line-height: 1; }
+  .wheel-spin { transform-origin: 50px 46px; }
+  .spin .wheel-spin { animation: spin .45s linear infinite; }
+  .preview { position: absolute; z-index: 1; border: 3px dashed var(--teal); border-radius: 8px; background: rgba(47,184,169,.15); pointer-events: none; }
+  .ghost {
+    position: fixed; z-index: 1000; pointer-events: none; display: flex; align-items: center; justify-content: center;
+    transform: translate(-50%, -50%) scale(1.1); opacity: .9; filter: drop-shadow(0 8px 6px rgba(0,0,0,.25));
+  }
+  .ghost svg { width: 100%; height: 100%; }
+
+  .hamster { position: absolute; z-index: 20; cursor: pointer; }
+  .placing .hamster { pointer-events: none; }
+  .hbody, .hface { width: 100%; height: 100%; }
+  .hface svg { width: 100%; height: 100%; display: block; filter: drop-shadow(0 calc(var(--cell) * .07) calc(var(--cell) * .05) rgba(90, 55, 20, .35)); }
+  .hbody, .nametag { transition: opacity .3s; }
+  .inside .hbody, .inside .nametag { opacity: 0; }
+  .hbody { transition: opacity .3s, scale .25s; }
+  .intube .hbody { scale: .58; opacity: .92; }
+  .intube .nametag { opacity: 0; }
+
+  /* Day and night */
+  body { transition: background-color 2s; }
+  body.night { background-color: #2E2A55; }
+  body.night header h1 { color: #FFB3D1; }
+  body.night .sub { color: #D8D0F5; }
+  .sky {
+    position: absolute; inset: 0; z-index: 15; pointer-events: none; opacity: 0; transition: opacity 2s;
+    background: radial-gradient(circle at 88% 12%, rgba(255, 250, 210, .25), transparent 22%), rgba(20, 24, 80, .5);
+  }
+  .night .sky { opacity: 1; }
+  .sky .moon { position: absolute; right: 4%; top: 4%; font-size: calc(var(--cell) * .9); }
+  .sky .twinkle { position: absolute; color: #FFF6C8; font-size: calc(var(--cell) * .28); animation: twinkle 2s ease-in-out infinite alternate; }
+  @keyframes twinkle { from { opacity: .2; transform: scale(.7); } to { opacity: 1; transform: scale(1.1); } }
+  .hface.flip { transform: scaleX(-1); }
+  .walking .hbody { animation: waddle .28s ease-in-out infinite alternate; }
+  .running .hbody { animation: waddle .11s ease-in-out infinite alternate; }
+  .sleeping .hbody { transform: scale(.88) translateY(8%); filter: saturate(.75); }
+  .hop .hbody { animation: hop .5s ease-out; }
+  .hamster.pop .hbody { animation: popin .4s ease-out; }
+  .bubble {
+    position: absolute; left: 50%; bottom: 100%; transform: translate(-50%, -4px) scale(0); transform-origin: bottom center;
+    background: #fff; border: 2px solid var(--ink); border-radius: 14px; padding: 2px 10px;
+    font-weight: 600; font-size: clamp(13px, 1.6vw, 18px); white-space: nowrap; transition: transform .2s; pointer-events: none;
+  }
+  .bubble.show { transform: translate(-50%, -4px) scale(1); }
+  .nametag {
+    position: absolute; left: 50%; top: 94%; transform: translateX(-50%); pointer-events: none;
+    background: rgba(255,255,255,.88); border-radius: 10px; padding: 0 8px; font-size: clamp(11px, 1.3vw, 15px); font-weight: 600; white-space: nowrap;
+  }
+  .heart { position: absolute; z-index: 25; pointer-events: none; font-size: calc(var(--cell) * .5); animation: floatup 1.1s ease-out forwards; }
+  .toolbar { position: absolute; z-index: 40; display: flex; gap: 6px; background: #fff; border-radius: 14px; padding: 5px; box-shadow: 0 4px 14px rgba(0,0,0,.2); }
+  .toolbar button { font-size: 22px; border: none; background: #FFF1E2; border-radius: 10px; width: 46px; height: 46px; cursor: pointer; }
+  .toolbar button:hover { background: #FFE3EF; }
+  .help { font-size: 17px; margin: 14px 2px 8px; min-height: 2.6em; }
+  .cage-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn { font: inherit; font-size: 16px; border: none; border-radius: 999px; padding: 8px 16px; background: #FFF1E2; cursor: pointer; color: inherit; }
+  .btn:hover { background: #FFE3EF; }
+
+  /* Mini games */
+  .games-card { margin-top: 16px; }
+  .games { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+  .game { background: #FFF8F0; border: 3px dashed var(--line); border-radius: 18px; padding: 14px; display: flex; gap: 12px; align-items: center; }
+  .game .big { font-size: 40px; }
+  .game b { display: block; font-size: 18px; }
+  .soon { display: inline-block; margin-top: 4px; background: var(--sun); border-radius: 999px; padding: 1px 10px; font-size: 13px; font-weight: 600; }
+  button.game { font: inherit; color: inherit; text-align: left; cursor: pointer; border-style: solid; transition: transform .15s; }
+  button.game:hover { transform: translateY(-3px); border-color: var(--pink); background: #FFE3EF; }
+
+  /* Mini game window */
+  .modal {
+    position: fixed; inset: 0; z-index: 500; background: rgba(40, 25, 60, .6); display: flex; align-items: center; justify-content: center;
+    padding: calc(16px + env(safe-area-inset-top, 0px)) calc(16px + env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) calc(16px + env(safe-area-inset-left, 0px));
+  }
+  .modal-card { position: relative; background: #fff; border-radius: 24px; width: 100%; max-width: 620px; max-height: calc(100vh - 32px); overflow: auto; padding: 16px 18px 18px; overflow-x: hidden; }
+  .modal-card h2 { padding-right: 44px; }
+  .close { position: absolute; top: 10px; right: 10px; width: 40px; height: 40px; border-radius: 50%; border: none; background: #FFF1E2; font-size: 18px; cursor: pointer; }
+  .close:hover { background: #FFE3EF; }
+  .gstats { display: flex; gap: 16px; justify-content: center; font-weight: 600; margin: 8px 0; font-size: 17px; }
+  .gmsg { text-align: center; font-size: 19px; font-weight: 600; min-height: 1.4em; margin: 10px 0 0; }
+  .gmsg .btn { margin-top: 10px; }
+  .btn.big { background: var(--pink); color: #fff; }
+  .btn.big:hover { background: var(--pink-d); }
+
+  .maze-wrap { position: relative; width: min(100%, 440px); aspect-ratio: 1; margin: 0 auto; background: #F6E3BF; border: 5px solid #8C5A2E; border-radius: 10px; touch-action: none; }
+  .maze-wrap svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .mz-tok { position: absolute; display: flex; align-items: center; justify-content: center; transition: left .13s linear, top .13s linear; pointer-events: none; }
+  .mz-tok.emo { font-size: var(--mzf, 24px); line-height: 1; }
+  .mz-tok.me .mzham { width: 118%; height: 100%; flex: none; }
+  .mz-tok.me svg { width: 100%; height: 100%; }
+  .mz-tok.me.flip .mzham { transform: scaleX(-1); }
+  .pad { display: grid; grid-template-columns: repeat(3, 66px); gap: 6px; justify-content: center; margin-top: 12px; }
+  .pad button { height: 56px; font-size: 26px; border: none; border-radius: 14px; background: #FFF1E2; cursor: pointer; touch-action: manipulation; }
+  .pad button:active { background: #FFE3EF; transform: scale(.95); }
+
+  .track { position: relative; border-radius: 14px; overflow: hidden; border: 4px solid #62C46A; background: #88D07A; }
+  .lane { position: relative; height: 66px; background: #EBCB92; border-bottom: 3px dashed #fff; }
+  .lane:nth-child(even) { background: #E2BE7F; }
+  .lane.me { background: #FFD9E8; }
+  .lane .lname { position: absolute; left: 6px; bottom: 2px; font-size: 13px; font-weight: 600; z-index: 2; }
+  .racer { position: absolute; top: 3px; height: 50px; width: 62px; left: 0; z-index: 3; }
+  .racer .rbody, .racer svg { width: 100%; height: 100%; display: block; }
+  .racer.go .rbody { animation: waddle .1s ease-in-out infinite alternate; }
+  .finish { position: absolute; top: 0; bottom: 0; left: 88%; width: 12px; z-index: 1;
+    background: repeating-linear-gradient(#333 0 8px, #fff 8px 16px); background-size: 6px 16px;
+    background-image: repeating-linear-gradient(#333 0 8px, #fff 8px 16px), repeating-linear-gradient(#fff 0 8px, #333 8px 16px);
+    background-position: 0 0, 6px 0; background-repeat: repeat-y; }
+  .count { position: absolute; inset: 0; z-index: 5; display: flex; align-items: center; justify-content: center; pointer-events: none;
+    font-size: 76px; font-weight: 700; color: #fff; text-shadow: 0 5px 0 var(--pink-d); }
+  .tapbtn { font: inherit; font-size: 26px; font-weight: 600; padding: 16px 34px; border-radius: 999px; border: none; cursor: pointer;
+    background: var(--pink); color: #fff; box-shadow: 0 6px 0 var(--pink-d); touch-action: manipulation; user-select: none; }
+  .tapbtn:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--pink-d); }
+  .tapbtn:disabled { opacity: .5; cursor: default; }
+  .confetti { position: absolute; top: -20px; width: 10px; height: 14px; border-radius: 3px; z-index: 10; pointer-events: none; animation: fall 1.8s ease-in forwards; }
+  @keyframes fall { to { transform: translateY(110vh) rotate(720deg); } }
+
+  @keyframes waddle { from { transform: rotate(-5deg); } to { transform: rotate(5deg) translateY(-6%); } }
+  @keyframes hop { 0%,100% { transform: none; } 40% { transform: translateY(-30%); } }
+  @keyframes popin { 0% { transform: scale(.3); } 70% { transform: scale(1.15); } 100% { transform: scale(1); } }
+  @keyframes eaten { to { transform: scale(0) rotate(40deg); opacity: 0; } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes floatup { from { transform: translate(-50%, 0) scale(.6); opacity: 1; } to { transform: translate(-50%, -160%) scale(1.2); opacity: 0; } }
+
+  @media (max-width: 860px) {
+    .top { grid-template-columns: 1fr; }
+    .build { grid-template-columns: 1fr; }
+    .cage-card { order: -1; }
+  }
+</style>
+<!-- Shared textures (wood, straw, fabric…) used by the cage pictures -->
+<svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
+  <defs>
+    <pattern id="planks" width="12" height="9" patternUnits="userSpaceOnUse">
+      <rect width="12" height="9" fill="#D99D60"/>
+      <path d="M0 8.5 H12" stroke="#A96C38" stroke-width="1.2"/>
+      <path d="M0 3 Q4 1.8 7 3.4 T12 3" stroke="#C0844A" stroke-width=".7" fill="none"/>
+      <circle cx="9" cy="5.6" r=".8" fill="#B5773F"/>
+    </pattern>
+    <pattern id="shingles" width="12" height="8" patternUnits="userSpaceOnUse">
+      <rect width="12" height="8" fill="#E2705C"/>
+      <path d="M0 8 Q3 2.5 6 8 Q9 2.5 12 8" stroke="#B5463A" stroke-width="1.3" fill="none"/>
+      <path d="M2 6 Q3 4.5 4 6" stroke="#F49A85" stroke-width=".8" fill="none"/>
+    </pattern>
+    <pattern id="straw" width="8" height="8" patternUnits="userSpaceOnUse">
+      <rect width="8" height="8" fill="#EBC56A"/>
+      <path d="M0 2 L5 0 M2 7 L8 4 M-1 5 L3 4 M5 6 L8 6.5" stroke="#C99A3E" stroke-width="1"/>
+      <path d="M1 4 L4 3" stroke="#FFE7A0" stroke-width=".8"/>
+    </pattern>
+    <pattern id="bark" width="14" height="10" patternUnits="userSpaceOnUse">
+      <rect width="14" height="10" fill="#9A6236"/>
+      <path d="M0 3 Q7 1 14 3 M0 8 Q7 6 14 8" stroke="#6E4222" stroke-width="1.4" fill="none"/>
+      <path d="M3 5.5 H8" stroke="#B57A48" stroke-width=".9"/>
+    </pattern>
+    <pattern id="gingham" width="12" height="12" patternUnits="userSpaceOnUse">
+      <rect width="12" height="12" fill="#FFD3E5"/>
+      <rect width="6" height="12" fill="#FF8DBA" opacity=".5"/>
+      <rect width="12" height="6" fill="#FF8DBA" opacity=".5"/>
+    </pattern>
+    <pattern id="dots" width="14" height="14" patternUnits="userSpaceOnUse">
+      <rect width="14" height="14" fill="#8FD3C8"/>
+      <circle cx="4" cy="4" r="2.4" fill="#fff"/><circle cx="11" cy="11" r="2.4" fill="#fff"/>
+    </pattern>
+    <pattern id="sand" width="10" height="10" patternUnits="userSpaceOnUse">
+      <rect width="10" height="10" fill="#F2DDA6"/>
+      <circle cx="2" cy="3" r=".9" fill="#D9BE7C"/><circle cx="7" cy="7" r=".9" fill="#E3CA8E"/>
+      <circle cx="8" cy="2" r=".6" fill="#FFF8E0"/><circle cx="4" cy="8" r=".5" fill="#C9A866"/>
+    </pattern>
+    <pattern id="fibre" width="10" height="10" patternUnits="userSpaceOnUse">
+      <rect width="10" height="10" fill="#7A4A26"/>
+      <path d="M1 2 Q3 4 2 7 M6 1 Q8 3 7 6 M4 6 Q6 8 5 10" stroke="#A8703F" stroke-width="1" fill="none"/>
+    </pattern>
+    <linearGradient id="woodG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#E2AB72"/><stop offset="1" stop-color="#A86A35"/>
+    </linearGradient>
+    <linearGradient id="shadeB" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity=".3"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000" stop-opacity=".25"/>
+    </linearGradient>
+    <radialGradient id="domeShade" cx=".35" cy=".3" r=".8">
+      <stop offset="0" stop-color="#fff" stop-opacity=".4"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000" stop-opacity=".4"/>
+    </radialGradient>
+    <linearGradient id="ceramic" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#5B8DEF"/><stop offset=".35" stop-color="#9DBEFF"/><stop offset="1" stop-color="#3D63C2"/>
+    </linearGradient>
+    <linearGradient id="terracotta" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#C8643A"/><stop offset=".35" stop-color="#EE9564"/><stop offset="1" stop-color="#A44B28"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#9ED8FF" stop-opacity=".75"/><stop offset=".4" stop-color="#EEF9FF" stop-opacity=".95"/>
+      <stop offset="1" stop-color="#6BB8EE" stop-opacity=".85"/>
+    </linearGradient>
+    <linearGradient id="teal" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#2E9E91"/><stop offset=".4" stop-color="#6FD8CB"/><stop offset="1" stop-color="#258378"/>
+    </linearGradient>
+    <linearGradient id="pinkG" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFB3D1"/><stop offset="1" stop-color="#E0558F"/>
+    </linearGradient>
+    <radialGradient id="plush" cx=".4" cy=".35" r=".75">
+      <stop offset="0" stop-color="#E9DBFF"/><stop offset="1" stop-color="#9C7BEA"/>
+    </radialGradient>
+  </defs>
+</svg>
+
+<header>
+  <h1>🐹 Belle's Hamster Home</h1>
+  <p class="sub">Build a cage, choose your hamster and watch it play!</p>
+</header>
+
+<div class="wrap">
+  <section class="top">
+    <div class="card">
+      <h2>Choose your hamster</h2>
+      <div class="picker" id="picker"></div>
+      <div class="namerow">
+        <label for="name">Name:</label>
+        <input id="name" maxlength="14" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="dress" id="dress"></div>
+    </div>
+    <div class="card happy">
+      <h2>How is <span id="hname">your hamster</span>?</h2>
+      <div class="face" id="face">🙂</div>
+      <p class="small" id="happyText"></p>
+      <div class="needs" id="needs"></div>
+    </div>
+  </section>
+
+  <section class="build">
+    <div class="card shelf">
+      <h2>Pet shop shelf</h2>
+      <div class="tabs" id="tabs"></div>
+      <div class="swatches" id="swatches"></div>
+      <div class="tiles" id="tiles"></div>
+      <div class="bin" id="bin">🗑️ Drag things here to throw them away</div>
+    </div>
+
+    <div class="card cage-card">
+      <div class="cage" id="cage">
+        <div id="items"></div>
+        <div class="preview" id="preview" hidden></div>
+        <div class="sky" id="sky"><span class="moon">🌙</span></div>
+        <div class="hamster" id="ham">
+          <div class="bubble" id="bubble"></div>
+          <div class="needicon" id="needicon" hidden></div>
+          <div class="hbody"><div class="hface" id="hface"></div></div>
+          <div class="nametag" id="nametag"></div>
+        </div>
+        <div class="toolbar" id="toolbar" hidden></div>
+      </div>
+      <p class="help" id="help"></p>
+      <div class="cage-actions">
+        <button class="btn" id="clear">🧹 Empty the cage</button>
+        <button class="btn" id="sound">🔊 Sound on</button>
+        <button class="btn" id="daynight">🌙 Make it night</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="card games-card">
+    <h2>Mini games</h2>
+    <div class="games">
+      <button class="game" data-game="maze"><div class="big">🌀</div><div><b>Hamster Maze</b>Help your hamster find the carrot!<br><span class="soon">▶ Play</span></div></button>
+      <button class="game" data-game="race"><div class="big">🏁</div><div><b>Hamster Race</b>Who's the fastest hamster?<br><span class="soon">▶ Play</span></div></button>
+    </div>
+  </section>
+</div>
+
+<div class="modal" id="game" hidden>
+  <div class="modal-card" id="gameCard">
+    <button class="close" id="closeGame" aria-label="Close">✖</button>
+    <div id="gameBody"></div>
+  </div>
+</div>
+
+<div class="ghost" id="ghost" hidden></div>
+
+<script>
+(() => {
+  const COLS = 12, ROWS = 8;
+  const HW = 1.6, HH = 1.35;            // hamster size in cage squares
+  const KEY = 'belles-hamster-home-v1';
+
+  const HAMSTERS = [
+    { id: 'golden', label: 'Golden',    main: '#F0A84E', belly: '#FFF0D2', ear: '#F0A84E', name: 'Nibbles' },
+    { id: 'white',  label: 'Snowy',     main: '#FFFFFF', belly: '#FFF6EE', ear: '#FFFFFF', name: 'Snowball' },
+    { id: 'grey',   label: 'Grey',      main: '#A9A9B8', belly: '#E8E8EF', ear: '#A9A9B8', name: 'Smokey' },
+    { id: 'choc',   label: 'Chocolate', main: '#8E5B3E', belly: '#E9CBA7', ear: '#8E5B3E', name: 'Cocoa' },
+    { id: 'patchy', label: 'Patchy',    main: '#FFFFFF', belly: '#FFFFFF', ear: '#F0A84E', patch: '#F0A84E', name: 'Patches' },
+    { id: 'panda',  label: 'Panda',     main: '#FFFFFF', belly: '#FFFFFF', ear: '#3A3A3A', patch: '#3A3A3A', name: 'Domino' },
+  ];
+
+  const TUBE_COLOURS = [
+    ['#7CCBFF', '#3A93D6'], ['#FF9CCB', '#E0609F'], ['#88E09A', '#3EAE58'],
+    ['#FFD066', '#E0A21E'], ['#C3A8FF', '#8A64E0'],
+  ];
+
+  const CATS = [
+    { id: 'tubes',  label: '🌀 Tubes' },
+    { id: 'toys',   label: '🎡 Toys' },
+    { id: 'homes',  label: '🏠 Homes' },
+    { id: 'furniture', label: '🪑 Furniture' },
+    { id: 'snacks', label: '🥕 Snacks' },
+  ];
+
+  const DEFS = {
+    straight: { cat: 'tubes', label: 'Straight', tube: ['M0 50 H100'], rot: true },
+    corner:   { cat: 'tubes', label: 'Corner',   tube: ['M0 50 A50 50 0 0 1 50 100'], rot: true },
+    tee:      { cat: 'tubes', label: 'T-shape',  tube: ['M0 50 H100', 'M50 50 V100'], rot: true },
+    cross:    { cat: 'tubes', label: 'Cross',    tube: ['M0 50 H100', 'M50 0 V100'] },
+    wheel:    { cat: 'toys', label: 'Wheel', w: 2, h: 2, svg: 'wheel' },
+    ball:     { cat: 'toys', label: 'Hamster ball', svg: 'ball', say: ['Rolling, rolling!', 'Round and round!'] },
+    slide:    { cat: 'toys', label: 'Slide', w: 2, h: 2, art: 'slide', on: true, say: ['Wheee, slide!', 'Again! Again!'] },
+    seesaw:   { cat: 'toys', label: 'Seesaw', w: 2, h: 1, art: 'seesaw', on: true, say: ['Up and down!', 'Boing boing!'] },
+    chew:     { cat: 'toys', label: 'Chew sticks', art: 'chew', say: ['Chomp chomp!', 'Crunchy!'] },
+    teddy:    { cat: 'toys', label: 'Teddy', emoji: '🧸', say: ['Cuddles!', 'My best friend!'] },
+    yarn:     { cat: 'toys', label: 'Wool ball', emoji: '🧶', say: ['So fluffy!', 'Wiggle wiggle!'] },
+    house:    { cat: 'homes', label: 'Wooden house', w: 2, h: 2, art: 'house', inside: true },
+    hut:      { cat: 'homes', label: 'Straw hut', w: 2, h: 2, art: 'hut', inside: true },
+    coconut:  { cat: 'homes', label: 'Coconut', w: 2, h: 2, art: 'coconut', inside: true },
+    bed:      { cat: 'homes', label: 'Bed', w: 2, h: 1, art: 'bed', sleep: true },
+    hammock:  { cat: 'homes', label: 'Hammock', w: 2, h: 1, art: 'hammock', sleep: true },
+    cushion:  { cat: 'homes', label: 'Cushion', w: 2, h: 1, art: 'cushion', sleep: true },
+    bowl:     { cat: 'furniture', label: 'Food bowl', art: 'bowl', refill: 'food' },
+    water:    { cat: 'furniture', label: 'Water bottle', art: 'water', refill: 'drink' },
+    plant:    { cat: 'furniture', label: 'Grass pot', art: 'plant', say: ['Nom nom, grass!'] },
+    sand:     { cat: 'furniture', label: 'Sand bath', w: 2, h: 1, art: 'sand', on: true, say: ['Roll roll roll!', 'Sandy bath time!'] },
+    log:      { cat: 'furniture', label: 'Log tunnel', w: 2, h: 1, art: 'log', inside: true },
+    bridge:   { cat: 'furniture', label: 'Bridge', w: 2, h: 1, art: 'bridge', on: true, say: ['Look at me!', 'Over the bridge!'] },
+    platform: { cat: 'furniture', label: 'Platform', w: 2, h: 1, art: 'platform', on: true, say: ['I can see everything!'] },
+    ladder:   { cat: 'furniture', label: 'Ladder', w: 1, h: 2, art: 'ladder', on: true, say: ['Climbing up!'] },
+    carrot:   { cat: 'snacks', label: 'Carrot', emoji: '🥕', snack: true },
+    apple:    { cat: 'snacks', label: 'Apple', emoji: '🍎', snack: true },
+    broccoli: { cat: 'snacks', label: 'Broccoli', emoji: '🥦', snack: true },
+    seeds:    { cat: 'snacks', label: 'Sunflower', emoji: '🌻', snack: true },
+    berry:    { cat: 'snacks', label: 'Strawberry', emoji: '🍓', snack: true },
+    blue:     { cat: 'snacks', label: 'Blueberries', emoji: '🫐', snack: true },
+    cucumber: { cat: 'snacks', label: 'Cucumber', emoji: '🥒', snack: true },
+  };
+
+  const WHEEL = `<svg viewBox="0 0 100 100">
+    <rect x="25" y="89" width="50" height="9" rx="4" fill="#B98DFF"/>
+    <rect x="45" y="46" width="10" height="46" fill="#B98DFF"/>
+    <g class="wheel-spin">
+      <circle cx="50" cy="46" r="40" fill="#FFD166" fill-opacity=".3" stroke="#F4A261" stroke-width="6"/>
+      <circle cx="50" cy="46" r="34" fill="none" stroke="#F4A261" stroke-width="3" stroke-dasharray="4 6"/>
+      <g stroke="#F4A261" stroke-width="3">
+        <line x1="50" y1="8" x2="50" y2="84"/><line x1="12" y1="46" x2="88" y2="46"/>
+        <line x1="23" y1="19" x2="77" y2="73"/><line x1="77" y1="19" x2="23" y2="73"/>
+      </g>
+    </g>
+    <circle cx="50" cy="46" r="6" fill="#E07A3A"/>
+  </svg>`;
+
+  const BALL = `<svg viewBox="0 0 100 100">
+    <circle cx="50" cy="52" r="40" fill="#9AD7FF" fill-opacity=".4" stroke="#4FA9DD" stroke-width="4"/>
+    <path d="M14 52 H86" stroke="#4FA9DD" stroke-width="3"/>
+    <g stroke="#4FA9DD" stroke-width="3" stroke-linecap="round">
+      <line x1="40" y1="30" x2="40" y2="40"/><line x1="50" y1="28" x2="50" y2="40"/><line x1="60" y1="30" x2="60" y2="40"/>
+    </g>
+    <ellipse cx="34" cy="30" rx="10" ry="6" fill="#fff" fill-opacity=".8" transform="rotate(-30 34 30)"/>
+  </svg>`;
+
+  // ---------- Pictures for homes and furniture ----------
+  const O = '#5A3A20';
+  const S = `stroke="${O}" stroke-width="1.6" stroke-linejoin="round"`;
+  function rungs(n, x, y0, gap, w) {
+    let s = '';
+    for (let i = 0; i < n; i++) s += `<rect x="${x}" y="${y0 + i * gap}" width="${w}" height="8" rx="3" fill="url(#woodG)" ${S}/>`;
+    return s;
+  }
+  function bridgeSlats() {
+    let s = '';
+    for (let i = 0; i < 9; i++) {
+      const x = 18 + i * 18.5, y = 62 - 26 * Math.sin(Math.PI * (i + 0.5) / 9);
+      s += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="16" height="14" rx="2.5" fill="url(#woodG)" ${S}/>`;
+    }
+    return s;
+  }
+  const ART = {
+    house: `<svg viewBox="0 0 100 100"><g ${S}>
+      <polygon points="60,52 90,44 90,84 60,94" fill="url(#planks)"/>
+      <polygon points="60,52 90,44 90,84 60,94" fill="#000" fill-opacity=".25"/>
+      <polygon points="69,60 82,56.5 82,70 69,73.5" fill="#BFE6FF"/>
+      <path d="M75.5 58.2 V71.8 M69 66.8 L82 63.2" fill="none" stroke-width="1.2"/>
+      <polygon points="12,52 60,52 60,94 12,94" fill="url(#planks)"/>
+      <polygon points="12,52 36,28 60,52" fill="url(#planks)"/>
+      <rect x="12" y="52" width="48" height="42" fill="url(#shadeB)" stroke="none"/>
+      <polygon points="36,20 68,12 96,46 64,54" fill="url(#shingles)"/>
+      <polygon points="36,20 68,12 96,46 64,54" fill="#000" fill-opacity=".1"/>
+      <path d="M6 56 L36 20 L64 54" fill="none" stroke="#B5463A" stroke-width="6" stroke-linecap="round"/>
+      <circle cx="36" cy="41" r="5" fill="#FFE08A"/>
+      <ellipse cx="36" cy="77" rx="11" ry="13" fill="#3A2210" stroke="#8C5A2E" stroke-width="3"/>
+      <rect x="22" y="92" width="28" height="5" rx="2.5" fill="#A86A35"/>
+    </g></svg>`,
+    hut: `<svg viewBox="0 0 100 100"><g ${S}>
+      <path d="M8 92 Q6 30 50 16 Q94 30 92 92 Z" fill="url(#straw)"/>
+      <path d="M8 92 Q6 30 50 16 Q94 30 92 92 Z" fill="url(#domeShade)" stroke="none"/>
+      <path d="M9 72 Q50 62 91 72 M14 48 Q50 36 86 48" fill="none" stroke="#B88A33" stroke-width="3"/>
+      <path d="M43 20 L50 4 L57 20" fill="#E2B85A"/>
+      <path d="M35 92 V74 Q50 56 65 74 V92 Z" fill="#3A2210"/>
+    </g></svg>`,
+    coconut: `<svg viewBox="0 0 100 100"><g ${S}>
+      <path d="M8 88 Q8 22 50 20 Q92 22 92 88 Z" fill="url(#fibre)"/>
+      <path d="M8 88 Q8 22 50 20 Q92 22 92 88 Z" fill="url(#domeShade)" stroke="none"/>
+      <ellipse cx="50" cy="88" rx="43" ry="7" fill="#FBF3E6"/>
+      <ellipse cx="50" cy="66" rx="15" ry="16" fill="#2B160A" stroke="#FBF3E6" stroke-width="3.5"/>
+      <circle cx="38" cy="36" r="2.5" fill="#4A2A12" stroke="none"/><circle cx="50" cy="31" r="2.5" fill="#4A2A12" stroke="none"/><circle cx="62" cy="36" r="2.5" fill="#4A2A12" stroke="none"/>
+    </g></svg>`,
+    bed: `<svg viewBox="0 0 200 100"><g ${S}>
+      <rect x="14" y="80" width="10" height="15" rx="2" fill="#8C5A2E"/><rect x="176" y="80" width="10" height="15" rx="2" fill="#8C5A2E"/>
+      <rect x="8" y="56" width="184" height="28" rx="6" fill="url(#planks)"/>
+      <rect x="8" y="56" width="184" height="28" rx="6" fill="url(#shadeB)" stroke="none"/>
+      <rect x="8" y="12" width="26" height="72" rx="9" fill="url(#woodG)"/>
+      <path d="M21 32 c-4 -6 -11 0 0 8 c11 -8 4 -14 0 -8z" fill="#FF7EB3" stroke-width="1.2"/>
+      <rect x="30" y="44" width="158" height="22" rx="10" fill="#FFFDF8"/>
+      <rect x="84" y="37" width="106" height="32" rx="10" fill="url(#gingham)"/>
+      <rect x="84" y="37" width="16" height="32" rx="6" fill="#fff" fill-opacity=".55" stroke="none"/>
+      <rect x="36" y="31" width="46" height="24" rx="12" fill="#fff"/>
+      <ellipse cx="52" cy="38" rx="10" ry="4" fill="#fff" stroke="none" opacity=".9"/>
+      <path d="M40 50 Q59 56 78 50" fill="none" stroke="#E5DCCB" stroke-width="2"/>
+    </g></svg>`,
+    hammock: `<svg viewBox="0 0 200 100"><g ${S}>
+      <path d="M22 40 L10 3 M22 40 L36 3 M178 40 L164 3 M178 40 L190 3" stroke="#C9A06A" stroke-width="3.5" fill="none"/>
+      <path d="M22 40 Q100 112 178 40 Q100 80 22 40 Z" fill="url(#dots)"/>
+      <path d="M22 40 Q100 112 178 40 Q100 80 22 40 Z" fill="url(#shadeB)" stroke="none"/>
+      <path d="M30 44 Q100 82 170 44" fill="none" stroke="#000" stroke-opacity=".15" stroke-width="4"/>
+      <circle cx="22" cy="40" r="5" fill="#B8874E"/><circle cx="178" cy="40" r="5" fill="#B8874E"/>
+    </g></svg>`,
+    cushion: `<svg viewBox="0 0 200 100"><g ${S}>
+      <ellipse cx="100" cy="64" rx="92" ry="32" fill="url(#plush)"/>
+      <ellipse cx="100" cy="57" rx="66" ry="20" fill="#F4ECFF" stroke="#9C7BEA"/>
+      <ellipse cx="100" cy="60" rx="50" ry="12" fill="#E6D8FF" stroke="none"/>
+      <path d="M100 52 c-5 -7 -14 0 0 9 c14 -9 5 -16 0 -9z" fill="#FF9CCB" stroke-width="1.2"/>
+    </g></svg>`,
+    bowl: it => {
+      const f = fillOf(it);
+      const food = f > 0 ? `<ellipse cx="50" cy="${(56 - 3 * f).toFixed(1)}" rx="${(12 + 18 * f).toFixed(1)}" ry="${(3 + 4.5 * f).toFixed(1)}" fill="#C98A3E" stroke="none"/>` : '';
+      const seeds = f > 0.4 ? `<g stroke="none"><ellipse cx="38" cy="52" rx="3.5" ry="2" fill="#F2D38A"/><ellipse cx="50" cy="50" rx="3.5" ry="2" fill="#4A2A12"/>
+        <ellipse cx="60" cy="54" rx="3.5" ry="2" fill="#F2D38A"/><ellipse cx="46" cy="56" rx="3" ry="1.8" fill="#7DC35B"/>
+        <ellipse cx="64" cy="50" rx="3" ry="1.8" fill="#4A2A12"/></g>` : '';
+      return `<svg viewBox="0 0 100 100"><g ${S}>
+      <path d="M12 52 Q16 90 50 90 Q84 90 88 52 Z" fill="url(#ceramic)"/>
+      <ellipse cx="50" cy="52" rx="38" ry="12" fill="#DDE8FF"/>
+      <ellipse cx="50" cy="54" rx="31" ry="8" fill="#B9CCF2" stroke="none"/>
+      ${food}${seeds}
+      <path d="M22 64 Q26 80 38 84" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="4" stroke-linecap="round"/>
+    </g></svg>`;
+    },
+    water: it => {
+      const h = 36 * fillOf(it);
+      return `<svg viewBox="0 0 100 100"><g transform="rotate(-18 50 50)" ${S}>
+      <rect x="35" y="6" width="30" height="62" rx="11" fill="url(#glass)"/>
+      ${h > 1 ? `<rect x="37.5" y="${(66 - h).toFixed(1)}" width="25" height="${h.toFixed(1)}" rx="9" fill="#5DB4F0" fill-opacity=".6" stroke="none"/>` : ''}
+      <rect x="41" y="10" width="5" height="50" rx="2.5" fill="#fff" fill-opacity=".75" stroke="none"/>
+      <rect x="33" y="64" width="34" height="12" rx="4" fill="url(#pinkG)"/>
+      <rect x="46" y="76" width="8" height="15" fill="#C8CDD6"/>
+      <circle cx="50" cy="92" r="4" fill="#EEF1F6"/>
+    </g></svg>`;
+    },
+    plant: `<svg viewBox="0 0 100 100"><g ${S}>
+      <g fill="#6CC24A" stroke="#3E8A2A" stroke-width="1.3">
+        <path d="M30 54 Q22 30 26 12 Q34 32 38 54Z"/><path d="M40 54 Q38 26 46 8 Q48 30 48 54Z"/>
+        <path d="M50 54 Q54 26 62 10 Q60 32 58 54Z"/><path d="M60 54 Q68 34 78 20 Q72 38 68 54Z"/>
+        <path d="M35 54 Q30 38 18 30 Q28 44 30 54Z"/><path d="M54 54 Q48 36 52 22 Q56 38 60 54Z" fill="#8BD86A"/>
+      </g>
+      <path d="M26 56 L74 56 L68 92 L32 92 Z" fill="url(#terracotta)"/>
+      <rect x="21" y="50" width="58" height="11" rx="3" fill="#DD7C4E"/>
+    </g></svg>`,
+    sand: `<svg viewBox="0 0 200 100"><g ${S}>
+      <ellipse cx="100" cy="68" rx="92" ry="28" fill="#258378"/>
+      <ellipse cx="100" cy="58" rx="92" ry="28" fill="url(#teal)"/>
+      <ellipse cx="100" cy="58" rx="78" ry="19" fill="url(#sand)" stroke="#258378" stroke-width="2"/>
+      <g stroke="none" fill="#E6CC8B"><ellipse cx="78" cy="56" rx="14" ry="5"/><ellipse cx="128" cy="62" rx="12" ry="4"/></g>
+      <path d="M30 50 Q36 42 50 40" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="3" stroke-linecap="round"/>
+    </g></svg>`,
+    log: `<svg viewBox="0 0 200 100"><g ${S}>
+      <path d="M30 22 H172 A16 32 0 0 1 172 86 H30 Z" fill="url(#bark)"/>
+      <path d="M30 22 H172 A16 32 0 0 1 172 86 H30 Z" fill="url(#shadeB)" stroke="none"/>
+      <path d="M110 22 q6 10 0 18 M140 70 q-6 8 0 16" fill="none" stroke="#6E4222" stroke-width="2"/>
+      <circle cx="96" cy="16" r="5" fill="#7DC35B" stroke="#3E8A2A"/><path d="M96 21 V24" stroke="#3E8A2A"/>
+      <ellipse cx="30" cy="54" rx="18" ry="32" fill="#E8C08A"/>
+      <ellipse cx="30" cy="55" rx="14" ry="26" fill="none" stroke="#C9945A" stroke-width="1.5"/>
+      <ellipse cx="30" cy="56" rx="10" ry="20" fill="#3A2210" stroke="none"/>
+    </g></svg>`,
+    bridge: `<svg viewBox="0 0 200 100"><g ${S}>
+      <path d="M14 88 Q100 26 186 88" fill="none" stroke="#8C5A2E" stroke-width="6"/>
+      ${bridgeSlats()}
+      <path d="M14 38 Q100 -6 186 38" fill="none" stroke="#C9A06A" stroke-width="3.5"/>
+      <rect x="8" y="32" width="11" height="58" rx="3" fill="url(#woodG)"/>
+      <rect x="181" y="32" width="11" height="58" rx="3" fill="url(#woodG)"/>
+    </g></svg>`,
+    platform: `<svg viewBox="0 0 200 100"><g ${S}>
+      <rect x="18" y="58" width="10" height="38" fill="#8C5A2E"/><rect x="158" y="58" width="10" height="38" fill="#8C5A2E"/>
+      <rect x="182" y="42" width="8" height="40" fill="#6E4222"/>
+      <polygon points="24,26 194,26 178,46 8,46" fill="url(#planks)"/>
+      <polygon points="8,46 178,46 178,62 8,62" fill="url(#woodG)"/>
+      <polygon points="178,46 194,26 194,42 178,62" fill="#8C5A2E"/>
+    </g></svg>`,
+    ladder: `<svg viewBox="0 0 100 200"><g ${S}>
+      <rect x="16" y="6" width="13" height="188" rx="5" fill="url(#woodG)"/>
+      <rect x="71" y="6" width="13" height="188" rx="5" fill="url(#woodG)"/>
+      ${rungs(8, 24, 18, 23, 52)}
+    </g></svg>`,
+    slide: `<svg viewBox="0 0 100 100"><g ${S}>
+      <rect x="10" y="26" width="6" height="68" rx="2" fill="url(#woodG)"/>
+      <rect x="30" y="26" width="6" height="68" rx="2" fill="url(#woodG)"/>
+      ${rungs(4, 12, 40, 14, 22)}
+      <rect x="6" y="20" width="36" height="9" rx="3" fill="url(#planks)"/>
+      <rect x="78" y="70" width="6" height="24" fill="#8C5A2E"/>
+      <path d="M38 22 Q62 26 72 56 Q80 82 98 86 L98 96 Q72 94 63 66 Q55 40 38 34 Z" fill="url(#pinkG)"/>
+      <path d="M44 27 Q62 32 69 56" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="3" stroke-linecap="round"/>
+    </g></svg>`,
+    seesaw: `<svg viewBox="0 0 200 100"><g ${S}>
+      <polygon points="100,52 74,94 126,94" fill="#FFB347"/>
+      <polygon points="100,52 74,94 126,94" fill="url(#shadeB)" stroke="none"/>
+      <g transform="rotate(-11 100 50)">
+        <rect x="10" y="42" width="180" height="13" rx="6" fill="url(#planks)"/>
+        <rect x="14" y="30" width="22" height="13" rx="4" fill="url(#pinkG)"/>
+        <rect x="164" y="30" width="22" height="13" rx="4" fill="url(#teal)"/>
+      </g>
+      <circle cx="100" cy="51" r="5" fill="#B5463A"/>
+    </g></svg>`,
+    chew: `<svg viewBox="0 0 100 100"><g transform="rotate(-25 50 50)" ${S}>
+      <rect x="27" y="14" width="10" height="72" rx="5" fill="url(#bark)"/>
+      <rect x="38" y="10" width="10" height="78" rx="5" fill="url(#woodG)"/>
+      <rect x="49" y="14" width="10" height="72" rx="5" fill="url(#bark)"/>
+      <rect x="60" y="12" width="10" height="74" rx="5" fill="url(#woodG)"/>
+      <rect x="22" y="45" width="54" height="10" rx="3" fill="url(#pinkG)"/>
+      <circle cx="49" cy="50" r="6" fill="#FF7EB3"/>
+    </g></svg>`,
+  };
+
+  // ---------- Dress-up (drawn on top of the hamster picture) ----------
+  const heart = (cx, cy, s) => `M${cx} ${cy + 6 * s} C${cx - 10 * s} ${cy - 2 * s} ${cx - 5 * s} ${cy - 9 * s} ${cx} ${cy - 3 * s} C${cx + 5 * s} ${cy - 9 * s} ${cx + 10 * s} ${cy - 2 * s} ${cx} ${cy + 6 * s}Z`;
+  function star(cx, cy, r) {
+    let p = '';
+    for (let i = 0; i < 10; i++) {
+      const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * 0.45 : r;
+      p += `${(cx + rr * Math.cos(a)).toFixed(1)},${(cy + rr * Math.sin(a)).toFixed(1)} `;
+    }
+    return p;
+  }
+  function flower(x, y, col) {
+    let s = '';
+    for (let i = 0; i < 5; i++) {
+      const a = i * Math.PI * 2 / 5;
+      s += `<circle cx="${(x + 3.4 * Math.cos(a)).toFixed(1)}" cy="${(y + 3.4 * Math.sin(a)).toFixed(1)}" r="3" fill="${col}"/>`;
+    }
+    return s + `<circle cx="${x}" cy="${y}" r="2.2" fill="#FFD166"/>`;
+  }
+  const HO = 'stroke="#5A4030" stroke-width="1.8" stroke-linejoin="round"';
+  const ACCESSORIES = {
+    head: {
+      label: 'Hats',
+      items: {
+        party: { name: '🎉 Party hat', svg: `<g ${HO}><polygon points="70,30 92,30 81,2" fill="#7CCBFF"/>
+          <path d="M73.4 22 H88.6 M76.8 13 H85.2" stroke="#FF7EB3" stroke-width="4"/>
+          <polygon points="70,30 92,30 81,2" fill="none"/><circle cx="81" cy="3" r="4.5" fill="#FFD166"/></g>` },
+        crown: { name: '👑 Crown', svg: `<g ${HO}><path d="M67 31 L67 14 L74 22 L81 9 L88 22 L95 14 L95 31 Z" fill="#FFD166"/>
+          <circle cx="81" cy="25" r="2.8" fill="#E64B5D"/><circle cx="72.5" cy="26" r="2.2" fill="#4E95EE"/><circle cx="89.5" cy="26" r="2.2" fill="#62C46A"/></g>` },
+        tophat: { name: '🎩 Top hat', svg: `<g ${HO}><rect x="70" y="5" width="22" height="23" rx="2" fill="#3A3A48"/>
+          <rect x="70" y="20" width="22" height="5" fill="#E0558F"/><ellipse cx="81" cy="28" rx="18" ry="4" fill="#3A3A48"/></g>` },
+        flowers: { name: '🌸 Flowers', svg: `<path d="M58 40 Q81 18 104 40" fill="none" stroke="#62C46A" stroke-width="2.5"/>
+          ${flower(59, 38, '#FF9CCB')}${flower(69, 29, '#fff')}${flower(81, 25, '#C3A8FF')}${flower(93, 29, '#fff')}${flower(103, 38, '#FF9CCB')}` },
+        bow: { name: '🎀 Bow', svg: `<g ${HO}><polygon points="97,22 85,13 86,31" fill="#FF7EB3"/><polygon points="97,22 109,13 108,31" fill="#FF7EB3"/>
+          <circle cx="97" cy="22" r="4" fill="#E0558F"/></g>` },
+        beanie: { name: '🧶 Woolly hat', svg: `<g ${HO}><path d="M56 40 Q56 12 81 12 Q106 12 106 40 Z" fill="#6FD8CB"/>
+          <path d="M66 18 V38 M81 13 V38 M96 18 V38" stroke="#2FB8A9" stroke-width="2"/>
+          <rect x="54" y="34" width="54" height="9" rx="4" fill="#2FB8A9"/><circle cx="81" cy="10" r="6" fill="#fff"/></g>` },
+      },
+    },
+    face: {
+      label: 'Glasses',
+      items: {
+        round: { name: '👓 Round', svg: `<g stroke="#3A3A48" stroke-width="2.2" fill="#fff" fill-opacity=".25">
+          <circle cx="72" cy="48" r="7.5"/><circle cx="90" cy="48" r="7.5"/>
+          <path d="M79.5 47 Q81 45 82.5 47 M64.5 47 L58 44 M97.5 47 L104 44" fill="none"/></g>` },
+        cool: { name: '🕶️ Cool', svg: `<g stroke="#222" stroke-width="2"><rect x="63.5" y="43" width="16" height="10" rx="4" fill="#222"/>
+          <rect x="82.5" y="43" width="16" height="10" rx="4" fill="#222"/><path d="M79.5 46 H82.5 M63.5 46 L58 44 M98.5 46 L104 44"/>
+          <path d="M66 46 L70 46" stroke="#fff" stroke-opacity=".7" stroke-width="1.6"/><path d="M85 46 L89 46" stroke="#fff" stroke-opacity=".7" stroke-width="1.6"/></g>` },
+        hearts: { name: '💖 Hearts', svg: `<g stroke="#B5305C" stroke-width="1.6"><path d="${heart(72, 47, 1)}" fill="#FF5A8A" fill-opacity=".9"/>
+          <path d="${heart(90, 47, 1)}" fill="#FF5A8A" fill-opacity=".9"/><path d="M78 46 Q81 44 84 46" fill="none"/></g>` },
+        stars: { name: '⭐ Stars', svg: `<g stroke="#C99A2E" stroke-width="1.4"><polygon points="${star(72, 48, 9)}" fill="#FFD166" fill-opacity=".92"/>
+          <polygon points="${star(90, 48, 9)}" fill="#FFD166" fill-opacity=".92"/></g>` },
+      },
+    },
+    neck: {
+      label: 'Neck',
+      items: {
+        scarf: { name: '🧣 Scarf', svg: `<g ${HO}><path d="M88 84 L97 99 L89 100 L82 86 Z" fill="#E64B5D"/>
+          <path d="M57 73 Q81 87 105 73 L104 81 Q81 95 58 81 Z" fill="#F0645A"/>
+          <path d="M66 79 L68 87 M78 82 L79 90 M92 81 L91 89" stroke="#fff" stroke-width="2.5"/></g>` },
+        bowtie: { name: '🎀 Bow tie', svg: `<g ${HO}><polygon points="81,82 69,75 69,89" fill="#4E95EE"/><polygon points="81,82 93,75 93,89" fill="#4E95EE"/>
+          <circle cx="81" cy="82" r="3.5" fill="#2E6FC4"/></g>` },
+        pearls: { name: '📿 Pearls', svg: (() => {
+          let s = '';
+          for (let i = 0; i <= 8; i++) {
+            const t = i / 8, x = 61 + 40 * t, y = 76 + 14 * t * (1 - t) * 2;
+            s += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.7" fill="#FFFDF7" stroke="#B8B2A8" stroke-width=".9"/>`;
+          }
+          return s;
+        })() },
+      },
+    },
+  };
+  function outfitOf(id) { return (state.outfits && state.outfits[id]) || {}; }
+  function outfitSVG(outfit) {
+    // neck first, then glasses, then hat on top
+    return ['neck', 'face', 'head'].map(slot => {
+      const a = outfit && outfit[slot] && ACCESSORIES[slot].items[outfit[slot]];
+      return a ? a.svg : '';
+    }).join('');
+  }
+
+  function hamsterSVG(h, outfit) {
+    const o = '#5A4030', pink = '#F7B7C8';
+    const bodyPatch = h.patch ? `<ellipse cx="32" cy="58" rx="15" ry="13" fill="${h.patch}" stroke="none"/><ellipse cx="56" cy="80" rx="9" ry="6" fill="${h.patch}" stroke="none"/>` : '';
+    const headPatch = h.patch ? `<ellipse cx="89" cy="40" rx="9" ry="8" fill="${h.patch}" stroke="none"/>` : '';
+    return `<svg viewBox="0 0 120 100" xmlns="http://www.w3.org/2000/svg">
+      <g stroke="${o}" stroke-width="2.5" stroke-linejoin="round">
+        <ellipse cx="10" cy="66" rx="6" ry="4" fill="${pink}"/>
+        <ellipse cx="30" cy="90" rx="9" ry="5" fill="${pink}"/>
+        <ellipse cx="66" cy="91" rx="9" ry="5" fill="${pink}"/>
+        <ellipse cx="48" cy="62" rx="40" ry="30" fill="${h.main}"/>
+        <ellipse cx="54" cy="77" rx="24" ry="12" fill="${h.belly}" stroke="none"/>
+        ${bodyPatch}
+        <circle cx="67" cy="31" r="10" fill="${h.ear}"/><circle cx="95" cy="31" r="10" fill="${h.ear}"/>
+        <circle cx="67" cy="31" r="5" fill="${pink}" stroke="none"/><circle cx="95" cy="31" r="5" fill="${pink}" stroke="none"/>
+        <circle cx="81" cy="52" r="26" fill="${h.main}"/>
+        ${headPatch}
+        <ellipse cx="81" cy="63" rx="15" ry="10" fill="${h.belly}" stroke="none"/>
+      </g>
+      <circle cx="72" cy="48" r="4.6" fill="#2B1B12"/><circle cx="90" cy="48" r="4.6" fill="#2B1B12"/>
+      <circle cx="73.6" cy="46.4" r="1.6" fill="#fff"/><circle cx="91.6" cy="46.4" r="1.6" fill="#fff"/>
+      <circle cx="66" cy="59" r="5" fill="#FF9DBB" opacity=".6"/><circle cx="96" cy="59" r="5" fill="#FF9DBB" opacity=".6"/>
+      <ellipse cx="81" cy="57" rx="3.6" ry="2.6" fill="#E86A92"/>
+      <path d="M77 61 Q79 64.5 81 61 Q83 64.5 85 61" fill="none" stroke="${o}" stroke-width="1.8" stroke-linecap="round"/>
+      ${outfitSVG(outfit)}
+    </svg>`;
+  }
+
+  function tubeSVG(paths, col, dark, rot) {
+    const d = paths.map(p => `<path d="${p}" pathLength="100"/>`).join('');
+    return `<svg viewBox="0 0 100 100" style="transform:rotate(${rot * 90}deg)"><g fill="none" stroke-linecap="butt">
+      <g stroke="${dark}" stroke-width="52">${d}</g>
+      <g stroke="${col}" stroke-width="44">${d}</g>
+      <g stroke="#fff" stroke-opacity=".3" stroke-width="22" transform="translate(0 -5)">${d}</g>
+      <g stroke="#fff" stroke-opacity=".85" stroke-width="5" transform="translate(0 -12)">${d}</g>
+      <g stroke="${dark}" stroke-width="56" stroke-dasharray="6 88 6">${d}</g>
+    </g></svg>`;
+  }
+
+  // Paint colours for everything that isn't a tube or a snack (0 = its own colours)
+  const PAINTS = [
+    null,
+    { name: 'Red', hue: 0, c: '#F0645A' }, { name: 'Orange', hue: 28, c: '#F59A3C' },
+    { name: 'Yellow', hue: 58, b: 1.18, c: '#F4CF3A' }, { name: 'Green', hue: 115, c: '#62C46A' },
+    { name: 'Teal', hue: 172, c: '#3CC0B4' }, { name: 'Blue', hue: 212, c: '#4E95EE' },
+    { name: 'Purple', hue: 268, c: '#9B6CF0' }, { name: 'Pink', hue: 322, c: '#F06AAE' },
+  ];
+  const paintable = type => { const d = DEFS[type]; return !d.tube && !d.snack; };
+  const paintFilter = i => `grayscale(1) sepia(1) saturate(3.4) hue-rotate(${PAINTS[i].hue - 38}deg) brightness(${PAINTS[i].b || 1})`;
+  function fillOf(it) { return it.fill === undefined ? 1 : it.fill; }
+
+  function itemHTML(it) {
+    const d = DEFS[it.type];
+    if (d.tube) { const [c, k] = TUBE_COLOURS[it.ci || 0] || TUBE_COLOURS[0]; return tubeSVG(d.tube, c, k, it.rot || 0); }
+    let html;
+    if (d.art) html = typeof ART[d.art] === 'function' ? ART[d.art](it) : ART[d.art];
+    else if (d.svg === 'wheel') html = WHEEL;
+    else if (d.svg === 'ball') html = BALL;
+    else html = `<div class="emoji" style="--s:${d.s || 1}">${d.emoji}</div>`;
+    if (it.paint && PAINTS[it.paint] && paintable(it.type)) html = `<div class="paint" style="--pf:${paintFilter(it.paint)}">${html}</div>`;
+    return html;
+  }
+
+  // ---------- Saved state ----------
+  const starter = () => [
+    { id: 1, type: 'house', c: 0, r: 0 },
+    { id: 2, type: 'straight', c: 3, r: 1, ci: 0, rot: 0 },
+    { id: 3, type: 'straight', c: 4, r: 1, ci: 0, rot: 0 },
+    { id: 4, type: 'corner', c: 5, r: 1, ci: 0, rot: 0 },
+    { id: 5, type: 'straight', c: 5, r: 2, ci: 0, rot: 1 },
+    { id: 6, type: 'wheel', c: 9, r: 1 },
+    { id: 7, type: 'bowl', c: 1, r: 6 },
+    { id: 8, type: 'water', c: 2, r: 6 },
+    { id: 9, type: 'carrot', c: 8, r: 6 },
+  ];
+  let state = { items: starter(), nextId: 10, ham: 'golden', names: {}, tubeColour: 0, paint: 0, sound: true };
+  try {
+    const saved = JSON.parse(localStorage.getItem(KEY));
+    if (saved && Array.isArray(saved.items)) state = Object.assign(state, saved);
+  } catch (e) { /* no saving available — that's fine */ }
+  state.needs = Object.assign({ food: 80, drink: 80, sleep: 80, fun: 80 }, state.needs || {});
+  delete state.happy;
+  state.items = state.items.filter(it => DEFS[it.type]);
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  // ---------- Helpers ----------
+  const $ = id => document.getElementById(id);
+  const cage = $('cage'), itemsLayer = $('items'), ham = $('ham'), hface = $('hface'), bubble = $('bubble');
+  const toolbar = $('toolbar'), preview = $('preview'), ghost = $('ghost'), bin = $('bin');
+  const pct = (v, n) => (v / n * 100) + '%';
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const pickRand = a => a[Math.floor(Math.random() * a.length)];
+  const findItem = id => state.items.find(it => it.id === id);
+  const sizeOfType = t => [DEFS[t].w || 1, DEFS[t].h || 1];
+  const cellPx = () => cage.getBoundingClientRect().width / COLS;
+  const hamDef = () => HAMSTERS.find(h => h.id === state.ham) || HAMSTERS[0];
+  const nameOf = id => (state.names[id] || '').trim() || HAMSTERS.find(h => h.id === id).name;
+
+  let shelfCat = 'tubes', selectedShelf = null, selectedId = null, spinningId = null, paintOpen = false;
+
+  // Some things changed size, so keep older saved cages inside the walls
+  for (const it of state.items) {
+    const [w, h] = sizeOfType(it.type);
+    it.c = clamp(it.c, 0, COLS - w); it.r = clamp(it.r, 0, ROWS - h);
+  }
+
+  new ResizeObserver(() => document.documentElement.style.setProperty('--cell', cellPx() + 'px')).observe(cage);
+
+  // ---------- Sounds ----------
+  let actx = null;
+  function beep(f1, f2, len, vol, type = 'sine') {
+    if (!state.sound) return;
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      const t = actx.currentTime, o = actx.createOscillator(), g = actx.createGain();
+      o.type = type;
+      o.frequency.setValueAtTime(f1, t);
+      o.frequency.exponentialRampToValueAtTime(f2, t + len);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(vol, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + len + 0.02);
+      o.connect(g).connect(actx.destination);
+      o.start(t); o.stop(t + len + 0.05);
+    } catch (e) {}
+  }
+  const squeak = () => { beep(1600, 2700, 0.09, 0.12); setTimeout(() => beep(2200, 1700, 0.08, 0.1), 100); };
+  const pop = () => beep(420, 900, 0.08, 0.15, 'triangle');
+  const munch = () => { beep(300, 180, 0.05, 0.12, 'square'); setTimeout(() => beep(300, 180, 0.05, 0.1, 'square'), 140); setTimeout(() => beep(300, 180, 0.05, 0.08, 'square'), 280); };
+
+  // ---------- Hamster picker ----------
+  function renderPicker() {
+    $('picker').innerHTML = HAMSTERS.map(h =>
+      `<button class="pick${h.id === state.ham ? ' on' : ''}" data-id="${h.id}" aria-label="${h.label} hamster">${hamsterSVG(h, outfitOf(h.id))}<span>${h.label}</span></button>`).join('');
+    $('name').value = nameOf(state.ham);
+    renderDress();
+  }
+  function renderDress() {
+    const mine = outfitOf(state.ham);
+    $('dress').innerHTML = `<h3>Dress up ${nameOf(state.ham)} 👒</h3>` + Object.entries(ACCESSORIES).map(([slot, group]) =>
+      `<div class="slot"><b>${group.label}</b>` +
+      `<button class="acc${!mine[slot] ? ' on' : ''}" data-slot="${slot}" data-acc="">None</button>` +
+      Object.entries(group.items).map(([id, a]) =>
+        `<button class="acc${mine[slot] === id ? ' on' : ''}" data-slot="${slot}" data-acc="${id}">${a.name}</button>`).join('') +
+      '</div>').join('');
+  }
+  $('dress').addEventListener('click', e => {
+    const b = e.target.closest('.acc'); if (!b) return;
+    state.outfits = state.outfits || {};
+    const o = Object.assign({}, outfitOf(state.ham));
+    o[b.dataset.slot] = b.dataset.acc;
+    state.outfits[state.ham] = o; save();
+    renderPicker(); drawHamster();
+    if (b.dataset.acc) { squeak(); hearts(2); say(pickRand(['Do I look nice?', 'Ooh, fancy!', 'I love it!', 'So stylish!'])); }
+  });
+  $('picker').addEventListener('click', e => {
+    const b = e.target.closest('.pick'); if (!b) return;
+    state.ham = b.dataset.id; save();
+    renderPicker(); drawHamster();
+    ham.classList.remove('pop'); void ham.offsetWidth; ham.classList.add('pop');
+    squeak(); say(`Hi, I'm ${nameOf(state.ham)}!`);
+  });
+  $('name').addEventListener('input', e => {
+    state.names[state.ham] = e.target.value; save();
+    $('nametag').textContent = nameOf(state.ham);
+    $('dress').querySelector('h3').textContent = `Dress up ${nameOf(state.ham)} 👒`;
+    renderNeeds();
+  });
+  function drawHamster() {
+    hface.innerHTML = hamsterSVG(hamDef(), outfitOf(state.ham));
+    $('nametag').textContent = nameOf(state.ham);
+    renderNeeds();
+  }
+
+  // ---------- Needs: food, drink, sleep and fun ----------
+  const NEEDS = [
+    { k: 'food',  icon: '🍎', label: 'Food',  low: 'Hungry!', ask: '🥣' },
+    { k: 'drink', icon: '💧', label: 'Drink', low: 'Thirsty!', ask: '💧' },
+    { k: 'sleep', icon: '😴', label: 'Sleep', low: 'Sleepy!', ask: '😴' },
+    { k: 'fun',   icon: '🎾', label: 'Fun',   low: 'Bored!', ask: '🎾' },
+  ];
+  const DECAY = { food: 3, drink: 4, sleep: 2, fun: 3 };   // lost every 10 seconds
+  $('needs').innerHTML = NEEDS.map(n =>
+    `<div class="need" id="need-${n.k}"><span>${n.icon}</span><span>${n.label}</span><div class="meter"><i></i></div></div>`).join('');
+  function lowestNeed() {
+    return NEEDS.reduce((a, b) => state.needs[b.k] < state.needs[a.k] ? b : a);
+  }
+  function renderNeeds() {
+    for (const n of NEEDS) {
+      const row = $('need-' + n.k), v = state.needs[n.k];
+      row.querySelector('i').style.width = v + '%';
+      row.classList.toggle('low', v < 30);
+    }
+    const avg = NEEDS.reduce((s, n) => s + state.needs[n.k], 0) / NEEDS.length;
+    const low = lowestNeed(), lowV = state.needs[low.k];
+    $('hname').textContent = nameOf(state.ham);
+    $('face').textContent = lowV < 20 ? '😢' : avg < 45 ? '🙂' : avg < 75 ? '😄' : '🥰';
+    $('happyText').textContent = lowV < 30 ? `${low.low} ${nameOf(state.ham)} needs you!` : avg < 75 ? 'Happy!' : 'Super happy!';
+    const icon = $('needicon');
+    icon.hidden = lowV >= 30;
+    icon.textContent = low.ask;
+  }
+  function addNeed(k, n) { state.needs[k] = clamp(state.needs[k] + n, 0, 100); renderNeeds(); save(); }
+  setInterval(() => {
+    for (const k in DECAY) {
+      if (k === 'sleep' && (ham.classList.contains('sleeping') || ham.classList.contains('inside'))) continue;
+      // hamsters get sleepy in the day and want to play at night
+      const rate = k === 'sleep' ? (state.night ? 1 : 2.5) : k === 'fun' ? (state.night ? 4 : 3) : DECAY[k];
+      state.needs[k] = clamp(state.needs[k] - rate, 0, 100);
+    }
+    renderNeeds(); save();
+  }, 10000);
+
+  // ---------- Shelf ----------
+  function renderShelf() {
+    $('tabs').innerHTML = CATS.map(c => `<button class="tab${c.id === shelfCat ? ' on' : ''}" data-cat="${c.id}">${c.label}</button>`).join('');
+    const sw = $('swatches');
+    sw.hidden = shelfCat === 'snacks';
+    sw.innerHTML = shelfCat === 'tubes' ? 'Colour: ' + tubeSwatches(state.tubeColour) : 'Colour: ' + paintSwatches(state.paint);
+    const tiles = $('tiles');
+    tiles.innerHTML = '';
+    for (const [type, d] of Object.entries(DEFS)) {
+      if (d.cat !== shelfCat) continue;
+      const t = document.createElement('div');
+      t.className = 'tile' + (selectedShelf === type ? ' on' : '');
+      t.innerHTML = `<div class="prev">${itemHTML({ type, ci: state.tubeColour, rot: 0, paint: state.paint })}</div><div class="lbl">${d.label}</div>`;
+      t.addEventListener('pointerdown', e => startPress(e, { kind: 'shelf', type }));
+      tiles.appendChild(t);
+    }
+  }
+  $('tabs').addEventListener('click', e => {
+    const b = e.target.closest('.tab'); if (!b) return;
+    shelfCat = b.dataset.cat; renderShelf();
+  });
+  function tubeSwatches(on) {
+    return TUBE_COLOURS.map(([c], i) =>
+      `<button class="sw${i === on ? ' on' : ''}" data-ci="${i}" style="background:${c}" aria-label="Tube colour ${i + 1}"></button>`).join('');
+  }
+  function paintSwatches(on) {
+    return PAINTS.map((p, i) => p
+      ? `<button class="sw${i === on ? ' on' : ''}" data-paint="${i}" style="background:${p.c}" aria-label="${p.name}" title="${p.name}"></button>`
+      : `<button class="sw orig${i === on ? ' on' : ''}" data-paint="0" aria-label="Its own colours" title="Its own colours"></button>`).join('');
+  }
+  $('swatches').addEventListener('click', e => {
+    const b = e.target.closest('.sw'); if (!b) return;
+    if (b.dataset.ci !== undefined) state.tubeColour = +b.dataset.ci;
+    else state.paint = +b.dataset.paint;
+    save(); renderShelf();
+  });
+  $('swatches').style.flexWrap = 'wrap';
+  function toggleShelf(type) {
+    selectedShelf = selectedShelf === type ? null : type;
+    selectedId = null;
+    cage.classList.toggle('placing', !!selectedShelf);
+    renderShelf(); renderItems(); updateHelp();
+  }
+
+  function updateHelp() {
+    $('help').textContent = selectedShelf
+      ? `👆 Tap in the cage to add the ${DEFS[selectedShelf].label.toLowerCase()}. Tap it on the shelf again when you're finished.`
+      : '🖱️ Drag things from the shelf into the cage, or tap one and then tap the cage. Tap something in the cage to paint it 🎨. Tap an empty bowl or bottle to fill it up!';
+  }
+
+  // ---------- Cage items ----------
+  function renderItems() {
+    itemsLayer.innerHTML = '';
+    for (const it of state.items) {
+      const [w, h] = sizeOfType(it.type);
+      const el = document.createElement('div');
+      el.className = 'item' + (it.id === selectedId ? ' sel' : '') + (it.id === spinningId ? ' spin' : '') +
+        (DEFS[it.type].refill && fillOf(it) <= 0.02 ? ' empty' : '');
+      el.dataset.id = it.id;
+      Object.assign(el.style, { left: pct(it.c, COLS), top: pct(it.r, ROWS), width: pct(w, COLS), height: pct(h, ROWS) });
+      el.innerHTML = itemHTML(it);
+      el.addEventListener('pointerdown', e => startPress(e, { kind: 'placed', id: it.id }));
+      itemsLayer.appendChild(el);
+    }
+    renderToolbar();
+  }
+  const itemEl = id => itemsLayer.querySelector(`[data-id="${id}"]`);
+
+  function addItem(type, cell) {
+    const it = { id: state.nextId++, type, c: cell.c, r: cell.r };
+    if (DEFS[type].tube) { it.ci = state.tubeColour; it.rot = 0; }
+    else if (paintable(type) && state.paint) it.paint = state.paint;
+    state.items.push(it); save(); renderItems();
+    const el = itemEl(it.id); if (el) el.classList.add('new');
+    pop();
+  }
+  function removeItem(id) {
+    state.items = state.items.filter(it => it.id !== id);
+    if (selectedId === id) selectedId = null;
+    save(); renderItems();
+  }
+
+  function renderToolbar() {
+    const it = selectedId && findItem(selectedId);
+    if (!it) { toolbar.hidden = true; return; }
+    const d = DEFS[it.type], [w, h] = sizeOfType(it.type);
+    if (paintOpen) {
+      toolbar.innerHTML = (d.tube ? tubeSwatches(it.ci || 0) : paintSwatches(it.paint || 0)) +
+        '<button data-act="done" title="Done">✔️</button>';
+    } else {
+      toolbar.innerHTML =
+        (d.refill && fillOf(it) < 1 ? `<button data-act="fill" title="Fill up">${d.refill === 'food' ? '🥣' : '🚰'}</button>` : '') +
+        (d.rot ? '<button data-act="turn" title="Turn">🔄</button>' : '') +
+        (d.tube || paintable(it.type) ? '<button data-act="colour" title="Change colour">🎨</button>' : '') +
+        '<button data-act="bin" title="Throw away">🗑️</button>';
+    }
+    const half = paintOpen ? 4.2 : 1.8;
+    const cx = clamp(it.c + w / 2, half, COLS - half);
+    toolbar.style.left = pct(cx, COLS);
+    if (it.r >= 1.2) { toolbar.style.top = pct(it.r, ROWS); toolbar.style.transform = 'translate(-50%, -110%)'; }
+    else { toolbar.style.top = pct(it.r + h, ROWS); toolbar.style.transform = 'translate(-50%, 10%)'; }
+    toolbar.hidden = false;
+  }
+  toolbar.addEventListener('click', e => {
+    e.stopPropagation(); // the toolbar is redrawn below, so don't let the cage see this tap
+    const b = e.target.closest('button'); const it = findItem(selectedId);
+    if (!b || !it) return;
+    const act = b.dataset.act;
+    if (act === 'turn') it.rot = ((it.rot || 0) + 1) % 4;
+    if (act === 'colour') paintOpen = true;
+    if (act === 'done') paintOpen = false;
+    if (b.dataset.ci !== undefined) it.ci = +b.dataset.ci;
+    if (b.dataset.paint !== undefined) it.paint = +b.dataset.paint;
+    if (act === 'fill') { refill(it); return; }
+    if (act === 'bin') { removeItem(it.id); return; }
+    pop(); save(); renderItems();
+  });
+  function refill(it) {
+    it.fill = 1; save(); pop();
+    renderItems();
+    const d = DEFS[it.type];
+    say(d.refill === 'food' ? 'Ooh, food! Thank you! 💖' : 'Fresh water! Thank you! 💖');
+    hearts(2);
+    // a hungry or thirsty hamster comes straight over
+    if (state.needs[d.refill] < 60) goBeside(it, () => (d.refill === 'food' ? eatBowl : drinkWater)(it.id));
+  }
+
+  // ---------- Drag and tap ----------
+  let press = null, justDragged = false;
+
+  function cellAt(x, y, w, h) {
+    const r = cage.getBoundingClientRect();
+    if (x < r.left || x > r.right || y < r.top || y > r.bottom) return null;
+    const cp = r.width / COLS;
+    return {
+      c: clamp(Math.round((x - r.left) / cp - w / 2), 0, COLS - w),
+      r: clamp(Math.round((y - r.top) / cp - h / 2), 0, ROWS - h),
+    };
+  }
+  function overBin(e) {
+    const r = bin.getBoundingClientRect();
+    return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+  }
+
+  function startPress(e, info) {
+    if (e.button) return;
+    e.preventDefault();
+    press = { x: e.clientX, y: e.clientY, info, dragging: false };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onCancel);
+  }
+  function stopListening() {
+    window.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', onUp);
+    window.removeEventListener('pointercancel', onCancel);
+  }
+  function beginDrag() {
+    const p = press;
+    const it = p.info.kind === 'placed' ? findItem(p.info.id) : { type: p.info.type, ci: state.tubeColour, rot: 0, paint: state.paint };
+    if (!it) return false;
+    p.dragging = true;
+    p.size = sizeOfType(it.type);
+    const cp = cellPx();
+    ghost.innerHTML = itemHTML(it);
+    ghost.style.width = cp * p.size[0] + 'px';
+    ghost.style.height = cp * p.size[1] + 'px';
+    ghost.hidden = false;
+    if (p.info.kind === 'placed') { const el = itemEl(it.id); if (el) el.classList.add('lifted'); }
+    cage.classList.add('placing');
+    selectedId = null; renderToolbar();
+    return true;
+  }
+  function onMove(e) {
+    if (!press) return;
+    if (!press.dragging) {
+      if (Math.hypot(e.clientX - press.x, e.clientY - press.y) < 7) return;
+      if (!beginDrag()) return;
+    }
+    ghost.style.left = e.clientX + 'px';
+    ghost.style.top = e.clientY + 'px';
+    const [w, h] = press.size, cell = cellAt(e.clientX, e.clientY, w, h);
+    if (cell) {
+      Object.assign(preview.style, { left: pct(cell.c, COLS), top: pct(cell.r, ROWS), width: pct(w, COLS), height: pct(h, ROWS) });
+      preview.hidden = false;
+    } else preview.hidden = true;
+    bin.classList.toggle('hot', overBin(e));
+  }
+  function endDragVisuals() {
+    ghost.hidden = true; preview.hidden = true; bin.classList.remove('hot');
+    cage.classList.toggle('placing', !!selectedShelf);
+  }
+  function onCancel() {
+    stopListening();
+    if (press && press.dragging) { endDragVisuals(); renderItems(); }
+    press = null;
+  }
+  function onUp(e) {
+    stopListening();
+    const p = press; press = null;
+    if (!p) return;
+    if (!p.dragging) {
+      if (p.info.kind === 'shelf') toggleShelf(p.info.type);
+      return; // taps on placed things are handled by the cage click below
+    }
+    justDragged = true; setTimeout(() => { justDragged = false; }, 80);
+    endDragVisuals();
+    const [w, h] = p.size, cell = cellAt(e.clientX, e.clientY, w, h);
+    if (p.info.kind === 'shelf') {
+      if (cell) addItem(p.info.type, cell);
+      return;
+    }
+    const it = findItem(p.info.id);
+    if (it) {
+      if (overBin(e)) { removeItem(it.id); pop(); return; }
+      if (cell) { it.c = cell.c; it.r = cell.r; save(); pop(); }
+    }
+    renderItems();
+  }
+
+  cage.addEventListener('click', e => {
+    if (justDragged) return;
+    if (e.target.closest('.toolbar')) return;
+    if (e.target.closest('.hamster')) { tickle(); return; }
+    if (selectedShelf) {
+      const [w, h] = sizeOfType(selectedShelf), cell = cellAt(e.clientX, e.clientY, w, h);
+      if (cell) addItem(selectedShelf, cell);
+      return;
+    }
+    const el = e.target.closest('.item');
+    const it = el && findItem(+el.dataset.id);
+    // tapping an empty bowl or bottle fills it straight away
+    if (it && DEFS[it.type].refill && fillOf(it) <= 0.02) { selectedId = null; refill(it); return; }
+    selectedId = it ? it.id : null;
+    paintOpen = false;
+    renderItems();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && selectedShelf) toggleShelf(selectedShelf);
+  });
+
+  // Ask "are you sure?" on the button itself: tap once to arm, tap again within 3 seconds to empty
+  let clearArmed = null;
+  $('clear').addEventListener('click', () => {
+    const b = $('clear');
+    if (!clearArmed) {
+      b.textContent = '⚠️ Tap again to empty it';
+      clearArmed = setTimeout(() => { clearArmed = null; b.textContent = '🧹 Empty the cage'; }, 3000);
+      return;
+    }
+    clearTimeout(clearArmed); clearArmed = null; b.textContent = '🧹 Empty the cage';
+    state.items = []; selectedId = null; save(); renderItems();
+  });
+  function renderSound() { $('sound').textContent = state.sound ? '🔊 Sound on' : '🔇 Sound off'; }
+  $('sound').addEventListener('click', () => { state.sound = !state.sound; save(); renderSound(); });
+
+  // ---------- Day and night ----------
+  for (let i = 0; i < 14; i++) {
+    const s = document.createElement('span');
+    s.className = 'twinkle'; s.textContent = '✦';
+    s.style.left = (Math.random() * 88 + 2) + '%';
+    s.style.top = (Math.random() * 85 + 3) + '%';
+    s.style.animationDelay = (Math.random() * 2) + 's';
+    $('sky').appendChild(s);
+  }
+  let cycleSecs = 0;
+  function setNight(n, announce) {
+    state.night = n; save(); cycleSecs = 0;
+    document.body.classList.toggle('night', n);
+    $('daynight').textContent = n ? '☀️ Make it day' : '🌙 Make it night';
+    if (announce) { squeak(); say(n ? 'Ooh, night time! My favourite! 🌙' : 'Good morning! ☀️', 2600); }
+  }
+  $('daynight').addEventListener('click', () => setNight(!state.night, true));
+  // day lasts 3 minutes and night 2 minutes, then it changes by itself
+  setInterval(() => { cycleSecs += 10; if (cycleSecs >= (state.night ? 120 : 180)) setNight(!state.night, true); }, 10000);
+
+  // ---------- The hamster comes alive ----------
+  let hx = 5.2, hy = 3.3, actTimer = null, bubbleTimer = null;
+  ham.style.width = pct(HW, COLS);
+  ham.style.height = pct(HH, ROWS);
+
+  function placeHam(x, y, dur) {
+    ham.style.transition = dur ? `left ${dur}s linear, top ${dur}s linear` : 'none';
+    ham.style.left = pct(x, COLS);
+    ham.style.top = pct(y, ROWS);
+  }
+  function say(text, ms = 1700) {
+    bubble.textContent = text;
+    bubble.classList.add('show');
+    clearTimeout(bubbleTimer);
+    bubbleTimer = setTimeout(() => bubble.classList.remove('show'), ms);
+  }
+  function hearts(n) {
+    for (let i = 0; i < n; i++) {
+      const s = document.createElement('span');
+      s.className = 'heart';
+      s.textContent = pickRand(['❤️', '💖', '💕']);
+      s.style.left = pct(hx + HW / 2 + (Math.random() - 0.5) * 1.2, COLS);
+      s.style.top = pct(hy - 0.2, ROWS);
+      s.style.animationDelay = (i * 0.15) + 's';
+      cage.appendChild(s);
+      setTimeout(() => s.remove(), 1500);
+    }
+  }
+  function tickle() {
+    squeak(); hearts(3); addNeed('fun', 6);
+    say(pickRand(['Squeak!', 'Hehe, that tickles!', 'I love you!', 'Squeak squeak!']));
+    ham.classList.remove('hop'); void ham.offsetWidth; ham.classList.add('hop');
+    setTimeout(() => ham.classList.remove('hop'), 600);
+  }
+
+  const face = left => hface.classList.toggle('flip', left);
+  const resetMood = () => ham.classList.remove('walking', 'running', 'sleeping', 'inside', 'intube');
+  function schedule(ms) { clearTimeout(actTimer); actTimer = setTimeout(nextAction, ms); }
+
+  function go(tx, ty, then) {
+    tx = clamp(tx, 0, COLS - HW); ty = clamp(ty, 0, ROWS - HH);
+    const dist = Math.hypot(tx - hx, ty - hy);
+    if (Math.abs(tx - hx) > 0.05) face(tx < hx);
+    const dur = Math.max(0.3, dist * (state.night ? 0.22 : 0.32));   // livelier at night
+    resetMood(); ham.classList.add('walking');
+    placeHam(tx, ty, dur); hx = tx; hy = ty;
+    clearTimeout(actTimer);
+    actTimer = setTimeout(() => { ham.classList.remove('walking'); then(); }, dur * 1000);
+  }
+  function goBeside(it, then) {
+    const [w, h] = sizeOfType(it.type);
+    let x = it.c - HW + 0.4, onRight = false;
+    if (x < 0) { x = it.c + w - 0.4; onRight = true; }
+    go(x, it.r + h / 2 - HH / 2, () => { face(onRight); then(); });
+  }
+  function goOnto(it, then) {
+    const [w, h] = sizeOfType(it.type);
+    go(it.c + w / 2 - HW / 2, it.r + h / 2 - HH / 2, then);
+  }
+  const ofKind = test => state.items.filter(it => test(DEFS[it.type]));
+
+  // Try to sort out a need. Returns false if there's nothing in the cage that helps.
+  function tryNeed(k) {
+    const snacks = ofKind(d => d.snack);
+    const bowls = state.items.filter(it => DEFS[it.type].refill === 'food' && fillOf(it) > 0.02);
+    const bottles = state.items.filter(it => DEFS[it.type].refill === 'drink' && fillOf(it) > 0.02);
+    const beds = ofKind(d => d.sleep || d.inside);
+    const fun = ofKind(d => d.svg === 'wheel' || (d.say && !d.snack));
+    if (k === 'food') {
+      if (snacks.length) { const s = pickRand(snacks); goBeside(s, () => eat(s.id)); return true; }
+      if (bowls.length) { const b = pickRand(bowls); goBeside(b, () => eatBowl(b.id)); return true; }
+    }
+    if (k === 'drink' && bottles.length) { const b = pickRand(bottles); goBeside(b, () => drinkWater(b.id)); return true; }
+    if (k === 'sleep' && beds.length) { const b = pickRand(beds); goOnto(b, DEFS[b.type].inside ? hide : nap); return true; }
+    const tp = k === 'fun' && findTubePath();
+    if (tp && (!fun.length || Math.random() < 0.4)) { runTubes(tp); return true; }
+    if (k === 'fun' && fun.length) {
+      const t = pickRand(fun), d = DEFS[t.type];
+      if (d.svg === 'wheel') goOnto(t, () => runWheel(t.id));
+      else (d.on ? goOnto : goBeside)(t, () => play(t));
+      return true;
+    }
+    return false;
+  }
+  function askFor(k) {
+    const has = refill => state.items.some(it => DEFS[it.type].refill === refill);
+    const lines = {
+      food: has('food') ? 'My bowl is empty! Can you fill it? 🥣' : "I'm hungry! Can I have a snack? 🥕",
+      drink: has('drink') ? 'My water has run out! 💧' : "I'm thirsty! I need a water bottle! 💧",
+      sleep: "I'm sleepy… I need a bed! 😴",
+      fun: "I'm bored! Can I have a toy? 🎾",
+    };
+    squeak(); say(lines[k], 3200);
+    ham.classList.remove('hop'); void ham.offsetWidth; ham.classList.add('hop');
+    setTimeout(() => ham.classList.remove('hop'), 600);
+    schedule(4500);
+  }
+
+  function nextAction() {
+    resetMood();
+    // Look after the most important need first
+    const need = lowestNeed(), v = state.needs[need.k];
+    if (v < 40) { if (!tryNeed(need.k)) askFor(need.k); return; }
+    if (v < 75 && Math.random() < 0.5 && tryNeed(need.k)) return;
+
+    const snacks = ofKind(d => d.snack), wheels = ofKind(d => d.svg === 'wheel');
+    const beds = ofKind(d => d.sleep), hides = ofKind(d => d.inside), fun = ofKind(d => d.say && !d.snack);
+    const tubePath = findTubePath();
+    const night = !!state.night;
+    // Each choice has a weight: bigger = more likely
+    const choices = [];
+    if (snacks.length && state.needs.food < 92) choices.push([4, () => { const s = pickRand(snacks); goBeside(s, () => eat(s.id)); }]);
+    if (wheels.length) choices.push([night ? 6 : 2, () => { const w = pickRand(wheels); goOnto(w, () => runWheel(w.id)); }]);
+    if (tubePath) choices.push([night ? 6 : 3, () => runTubes(tubePath)]);
+    if (hides.length) choices.push([night ? 0.5 : 1.5, () => { const h = pickRand(hides); goOnto(h, hide); }]);
+    if (beds.length) choices.push([night ? 0.3 : 1.5, () => { const b = pickRand(beds); goOnto(b, nap); }]);
+    if (fun.length) choices.push([night ? 4 : 3, () => { const t = pickRand(fun); (DEFS[t.type].on ? goOnto : goBeside)(t, () => play(t)); }]);
+    choices.push([2, () => go(Math.random() * (COLS - HW), Math.random() * (ROWS - HH), () => {
+      if (Math.random() < 0.35) say(pickRand(night
+        ? ['I love the night! 🌙', 'Look at the stars!', 'Wide awake!']
+        : ['La la la!', 'Sniff sniff…', 'Hmm…', 'What a nice cage!']));
+      schedule((night ? 600 : 1200) + Math.random() * 1500);
+    })]);
+    let pick = Math.random() * choices.reduce((s, c) => s + c[0], 0);
+    for (const [w, fn] of choices) { pick -= w; if (pick <= 0) { fn(); return; } }
+    choices[choices.length - 1][1]();
+  }
+
+  // ---------- Tube running ----------
+  // Which sides of a square each tube opens onto, before it's turned
+  const TUBE_OPEN = { straight: ['W', 'E'], corner: ['W', 'S'], tee: ['W', 'E', 'S'], cross: ['N', 'E', 'S', 'W'] };
+  const CW = ['N', 'E', 'S', 'W'], OPP = { N: 'S', S: 'N', E: 'W', W: 'E' };
+  const STEP = { N: [0, -1], E: [1, 0], S: [0, 1], W: [-1, 0] };
+  function tubeMap() {
+    const m = new Map();
+    for (const it of state.items) {
+      if (!DEFS[it.type].tube) continue;
+      const k = it.c + ',' + it.r, set = m.get(k) || new Set();
+      for (const d of TUBE_OPEN[it.type]) set.add(CW[(CW.indexOf(d) + (it.rot || 0)) % 4]);
+      m.set(k, set);
+    }
+    return m;
+  }
+  function tubeLinks(m, k) {
+    const [c, r] = k.split(',').map(Number), out = [];
+    for (const d of m.get(k)) {
+      const nk = (c + STEP[d][0]) + ',' + (r + STEP[d][1]);
+      if (m.has(nk) && m.get(nk).has(OPP[d])) out.push(nk);
+    }
+    return out;
+  }
+  // Finds a route through joined-up tubes (at least 2 pieces long)
+  function findTubePath() {
+    const m = tubeMap();
+    const joined = [...m.keys()].filter(k => tubeLinks(m, k).length);
+    if (!joined.length) return null;
+    const ends = joined.filter(k => tubeLinks(m, k).length === 1);
+    let best = null;
+    for (let t = 0; t < 6; t++) {
+      let cur = pickRand(ends.length ? ends : joined);
+      const path = [cur], seen = new Set(path);
+      while (path.length < 40) {
+        const next = tubeLinks(m, cur).filter(k => !seen.has(k));
+        if (!next.length) break;
+        cur = pickRand(next); seen.add(cur); path.push(cur);
+      }
+      if (!best || path.length > best.length) best = path;
+    }
+    return best.length >= 2 ? best.map(k => k.split(',').map(Number)) : null;
+  }
+  function runTubes(path) {
+    const spot = ([c, r]) => [c + 0.5 - HW / 2, r + 0.5 - HH / 2];
+    go(...spot(path[0]), () => {
+      ham.classList.add('intube', 'walking');
+      say(pickRand(['Into the tubes!', 'Wheee, tubes!', 'Zoom zoom!']), 1400); squeak();
+      let i = 1;
+      const step = () => {
+        if (i >= path.length) {
+          ham.classList.remove('intube', 'walking');
+          addNeed('fun', 20);
+          say(pickRand(['That was fun!', 'Again! Again!', 'Tubes are the best!']));
+          schedule(1200); return;
+        }
+        const [x, y] = spot(path[i]);
+        if (Math.abs(x - hx) > 0.05) face(x < hx);
+        placeHam(x, y, 0.26); hx = x; hy = y; i++;
+        actTimer = setTimeout(step, 270);
+      };
+      actTimer = setTimeout(step, 250);
+    });
+  }
+  function eat(id) {
+    if (!findItem(id)) { schedule(600); return; }
+    say('Yum! 😋'); munch(); hearts(2); addNeed('food', 25); addNeed('fun', 4);
+    const el = itemEl(id); if (el) el.classList.add('eaten');
+    setTimeout(() => removeItem(id), 450);
+    schedule(1700);
+  }
+  function eatBowl(id) {
+    const it = findItem(id);
+    if (!it || fillOf(it) <= 0.02) { schedule(600); return; }
+    say(pickRand(['Crunch crunch!', 'Yummy seeds!'])); munch(); hearts(1); addNeed('food', 35);
+    it.fill = Math.max(0, fillOf(it) - 0.34);
+    if (it.fill < 0.05) it.fill = 0;
+    save(); renderItems();
+    schedule(1800);
+  }
+  function drinkWater(id) {
+    const it = findItem(id);
+    if (!it || fillOf(it) <= 0.02) { schedule(600); return; }
+    say(pickRand(['Slurp slurp! 💧', 'Ahh, lovely!']));
+    beep(900, 500, 0.12, 0.1); setTimeout(() => beep(900, 500, 0.12, 0.08), 220);
+    addNeed('drink', 40);
+    it.fill = Math.max(0, fillOf(it) - 0.25);
+    if (it.fill < 0.05) it.fill = 0;
+    save(); renderItems();
+    schedule(1800);
+  }
+  function runWheel(id) {
+    if (!findItem(id)) { schedule(600); return; }
+    spinningId = id; renderItems();
+    ham.classList.add('running'); say('Wheee! 🎡'); addNeed('fun', 25); addNeed('sleep', -4);
+    clearTimeout(actTimer);
+    actTimer = setTimeout(() => {
+      spinningId = null; renderItems(); ham.classList.remove('running'); schedule(900);
+    }, 3200);
+  }
+  function nap() {
+    ham.classList.add('sleeping'); say('Zzz… 💤', 3200); addNeed('sleep', 45);
+    clearTimeout(actTimer);
+    actTimer = setTimeout(() => { ham.classList.remove('sleeping'); schedule(800); }, 3600);
+  }
+  function hide() {
+    ham.classList.add('inside'); say(pickRand(['Peekaboo!', 'Cosy in here!', 'Zzz… 💤']), 3000); addNeed('sleep', 30);
+    clearTimeout(actTimer);
+    actTimer = setTimeout(() => { ham.classList.remove('inside'); schedule(900); }, 3600);
+  }
+  function play(it) {
+    const lines = (it && DEFS[it.type] && DEFS[it.type].say) || ['Ooh, fun!', 'Wiggle wiggle!', 'I love this!'];
+    say(pickRand(lines)); addNeed('fun', 15);
+    ham.classList.add('hop'); setTimeout(() => ham.classList.remove('hop'), 600);
+    schedule(1500);
+  }
+
+  // ---------- Mini games ----------
+  const modal = $('game'), gbody = $('gameBody');
+  const esc = s => String(s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+  let gameKind = null, maze = null, mazeLevel = 1, race = null, raceRAF = null, countTimers = [];
+
+  function openGame(kind) {
+    gameKind = kind; modal.hidden = false; document.body.style.overflow = 'hidden';
+    if (kind === 'maze') startMaze(); else startRace();
+  }
+  function stopRace() { cancelAnimationFrame(raceRAF); countTimers.forEach(clearTimeout); countTimers = []; }
+  function closeGame() {
+    stopRace(); gameKind = null; modal.hidden = true; document.body.style.overflow = '';
+    say(pickRand(['That was fun!', 'Let\'s play again soon!', 'Phew! I\'m back!']), 2200);
+  }
+  $('closeGame').addEventListener('click', closeGame);
+  modal.addEventListener('click', e => { if (e.target === modal) closeGame(); });
+  document.querySelectorAll('[data-game]').forEach(b => b.addEventListener('click', () => openGame(b.dataset.game)));
+
+  function confetti() {
+    const card = $('gameCard'), cols = ['#FF7EB3', '#FFD166', '#2FB8A9', '#7CCBFF', '#B79CFF'];
+    for (let i = 0; i < 40; i++) {
+      const c = document.createElement('span');
+      c.className = 'confetti';
+      c.style.left = Math.random() * 100 + '%';
+      c.style.background = pickRand(cols);
+      c.style.animationDelay = Math.random() * 0.6 + 's';
+      card.appendChild(c);
+      setTimeout(() => c.remove(), 2600);
+    }
+  }
+
+  // --- Maze ---
+  function makeMaze(n) {
+    const cells = Array.from({ length: n * n }, () => ({ N: true, E: true, S: true, W: true }));
+    const seen = new Set([0]), stack = [0];
+    while (stack.length) {
+      const cur = stack[stack.length - 1], c = cur % n, r = Math.floor(cur / n), opts = [];
+      for (const d of CW) {
+        const nc = c + STEP[d][0], nr = r + STEP[d][1];
+        if (nc >= 0 && nr >= 0 && nc < n && nr < n && !seen.has(nr * n + nc)) opts.push([d, nr * n + nc]);
+      }
+      if (!opts.length) { stack.pop(); continue; }
+      const [d, nx] = pickRand(opts);
+      cells[cur][d] = false; cells[nx][OPP[d]] = false;
+      seen.add(nx); stack.push(nx);
+    }
+    return cells;
+  }
+  function startMaze() {
+    const n = Math.min(5 + mazeLevel * 2, 15);
+    const cells = makeMaze(n), seeds = new Set();
+    while (seeds.size < 3) seeds.add(1 + Math.floor(Math.random() * (n * n - 2)));
+    let walls = '';
+    const L = (a, b, c, d) => `<line x1="${a}" y1="${b}" x2="${c}" y2="${d}"/>`;
+    cells.forEach((w, i) => {
+      const c = i % n, r = Math.floor(i / n);
+      if (w.N) walls += L(c, r, c + 1, r);
+      if (w.W) walls += L(c, r, c, r + 1);
+      if (c === n - 1 && w.E) walls += L(c + 1, r, c + 1, r + 1);
+      if (r === n - 1 && w.S) walls += L(c, r + 1, c + 1, r + 1);
+    });
+    gbody.innerHTML = `<h2>🌀 Hamster Maze · level ${mazeLevel}</h2>
+      <p class="small">Help ${esc(nameOf(state.ham))} find the carrot 🥕! Use the arrow keys, swipe, or tap the arrows. Grab the 🌻 seeds on the way!</p>
+      <div class="gstats"><span id="mzSeeds">🌻 0 / 3</span><span id="mzMoves">👣 0 moves</span></div>
+      <div class="maze-wrap" id="mazeWrap"><svg viewBox="0 0 ${n} ${n}" preserveAspectRatio="none">
+        <g stroke="#8C5A2E" stroke-width="0.16" stroke-linecap="round">${walls}</g></svg></div>
+      <div class="pad"><span></span><button data-dir="N" aria-label="Up">⬆️</button><span></span>
+        <button data-dir="W" aria-label="Left">⬅️</button><button data-dir="S" aria-label="Down">⬇️</button><button data-dir="E" aria-label="Right">➡️</button></div>
+      <p class="gmsg" id="gmsg"></p>`;
+    const wrap = $('mazeWrap'), size = 100 / n;
+    wrap.style.setProperty('--mzf', (wrap.clientWidth / n * 0.62) + 'px');
+    const place = (el, i) => { el.style.left = (i % n) * size + '%'; el.style.top = Math.floor(i / n) * size + '%'; };
+    const token = (i, html, cls) => {
+      const el = document.createElement('div');
+      el.className = 'mz-tok ' + cls; el.style.width = el.style.height = size + '%';
+      el.innerHTML = html; place(el, i); wrap.appendChild(el); return el;
+    };
+    maze = { n, cells, pos: 0, goal: n * n - 1, seeds, got: 0, moves: 0, done: false, place, seedEls: {} };
+    maze.goalEl = token(maze.goal, '🥕', 'emo');
+    seeds.forEach(k => { maze.seedEls[k] = token(k, '🌻', 'emo'); });
+    maze.hamEl = token(0, `<div class="mzham">${hamsterSVG(hamDef(), outfitOf(state.ham))}</div>`, 'me');
+    gbody.querySelector('.pad').addEventListener('click', e => { const b = e.target.closest('[data-dir]'); if (b) mazeMove(b.dataset.dir); });
+    let sx = 0, sy = 0;
+    wrap.addEventListener('pointerdown', e => { sx = e.clientX; sy = e.clientY; });
+    wrap.addEventListener('pointerup', e => {
+      const dx = e.clientX - sx, dy = e.clientY - sy;
+      if (Math.max(Math.abs(dx), Math.abs(dy)) < 20) return;
+      mazeMove(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'E' : 'W') : (dy > 0 ? 'S' : 'N'));
+    });
+  }
+  function mazeMove(d) {
+    if (!maze || maze.done) return;
+    const { n, cells } = maze;
+    if (cells[maze.pos][d]) { beep(220, 160, 0.06, 0.08); return; }   // bumped a wall
+    const c = maze.pos % n + STEP[d][0], r = Math.floor(maze.pos / n) + STEP[d][1];
+    maze.pos = r * n + c; maze.moves++;
+    maze.place(maze.hamEl, maze.pos);
+    if (d === 'W' || d === 'E') maze.hamEl.classList.toggle('flip', d === 'W');
+    beep(600, 720, 0.04, 0.05);
+    if (maze.seeds.has(maze.pos)) {
+      maze.seeds.delete(maze.pos); maze.seedEls[maze.pos].remove(); maze.got++;
+      beep(800, 1500, 0.12, 0.12);
+    }
+    $('mzSeeds').textContent = `🌻 ${maze.got} / 3`;
+    $('mzMoves').textContent = `👣 ${maze.moves} moves`;
+    if (maze.pos === maze.goal) {
+      maze.done = true; maze.goalEl.remove(); munch(); squeak(); confetti();
+      addNeed('fun', 20); addNeed('food', 10);
+      $('gmsg').innerHTML = `🎉 Yay! ${esc(nameOf(state.ham))} found the carrot in ${maze.moves} moves${maze.got === 3 ? ' and got ALL the seeds! 🌟' : '!'}<br>
+        <button class="btn big" id="mzNext">Next maze ➡️</button> <button class="btn" id="mzBack">Back to the cage</button>`;
+      $('mzNext').addEventListener('click', () => { mazeLevel++; startMaze(); });
+      $('mzBack').addEventListener('click', closeGame);
+    }
+  }
+
+  // --- Race ---
+  function startRace() {
+    stopRace();
+    const others = HAMSTERS.filter(h => h.id !== state.ham).sort(() => Math.random() - 0.5).slice(0, 3);
+    const racers = [{ h: hamDef(), name: nameOf(state.ham), me: true, outfit: outfitOf(state.ham) },
+      ...others.map(h => ({ h, name: h.name, me: false }))].sort(() => Math.random() - 0.5);
+    racers.forEach(r => { r.pos = 0; r.speed = 8 + Math.random() * 3.5; r.place = 0; r.lastTap = 0; });
+    gbody.innerHTML = `<h2>🏁 Hamster Race</h2>
+      <p class="small">Tap the big button as fast as you can (or press the space bar) to make ${esc(nameOf(state.ham))} run!</p>
+      <div class="track" id="track">${racers.map((r, i) => `<div class="lane${r.me ? ' me' : ''}">
+        <div class="racer" id="racer${i}"><div class="rbody">${hamsterSVG(r.h, r.outfit)}</div></div>
+        <span class="lname">${r.me ? '⭐ ' : ''}${esc(r.name)}</span></div>`).join('')}
+        <div class="finish"></div><div class="count" id="count"></div></div>
+      <div style="text-align:center;margin-top:14px"><button class="tapbtn" id="tapRun" disabled>🐾 Tap to run!</button></div>
+      <p class="gmsg" id="gmsg"></p>`;
+    race = { racers, started: false, over: false, finished: 0, last: 0 };
+    $('tapRun').addEventListener('pointerdown', e => { e.preventDefault(); raceTap(); });
+    const steps = ['3', '2', '1', 'GO!'];
+    steps.forEach((s, i) => countTimers.push(setTimeout(() => {
+      $('count').textContent = s;
+      beep(i === 3 ? 900 : 500, i === 3 ? 1300 : 520, 0.15, 0.12);
+      if (i === 3) {
+        race.started = true; $('tapRun').disabled = false;
+        countTimers.push(setTimeout(() => { const c = $('count'); if (c) c.textContent = ''; }, 600));
+        race.last = performance.now(); raceRAF = requestAnimationFrame(raceLoop);
+      }
+    }, 300 + i * 750)));
+  }
+  function raceTap() {
+    if (!race || !race.started || race.over) return;
+    const me = race.racers.find(r => r.me);
+    if (me.place) return;
+    me.pos = Math.min(100, me.pos + 2.9); me.lastTap = performance.now();
+    beep(700, 820, 0.03, 0.04);
+  }
+  function raceLoop(t) {
+    if (!race || gameKind !== 'race') return;
+    const dt = Math.min(0.05, (t - race.last) / 1000); race.last = t;
+    race.racers.forEach((r, i) => {
+      if (!r.me && !r.place) r.pos = Math.min(100, r.pos + r.speed * dt * (0.8 + Math.random() * 0.4));
+      if (r.pos >= 100 && !r.place) r.place = ++race.finished;
+      const el = $('racer' + i);
+      el.style.left = (r.pos * 0.8) + '%';
+      el.classList.toggle('go', !r.place && (r.me ? t - r.lastTap < 250 : true));
+    });
+    const me = race.racers.find(r => r.me);
+    if (!race.over && (me.place || race.finished >= 3)) {
+      race.over = true;
+      const place = me.place || 4;
+      const msg = [
+        `🥇 You won! ${esc(me.name)} is the fastest hamster!`,
+        '🥈 2nd place! So close!',
+        '🥉 3rd place! Good running!',
+        "4th place. Keep practising, you can do it! 💪",
+      ][place - 1];
+      addNeed('fun', 15); addNeed('sleep', -5);
+      if (place === 1) { confetti(); squeak(); }
+      $('tapRun').disabled = true;
+      $('gmsg').innerHTML = `${msg}<br><button class="btn big" id="raceAgain">Race again 🔁</button> <button class="btn" id="raceBack">Back to the cage</button>`;
+      $('raceAgain').addEventListener('click', startRace);
+      $('raceBack').addEventListener('click', closeGame);
+    }
+    // let the others finish running across the line, then stop
+    if (race.racers.every(r => r.place || (r.me && race.over))) return;
+    raceRAF = requestAnimationFrame(raceLoop);
+  }
+
+  document.addEventListener('keydown', e => {
+    if (!gameKind) return;
+    if (e.key === 'Escape') { closeGame(); return; }
+    const keys = { ArrowUp: 'N', ArrowDown: 'S', ArrowLeft: 'W', ArrowRight: 'E', w: 'N', s: 'S', a: 'W', d: 'E' };
+    if (gameKind === 'maze' && keys[e.key]) { e.preventDefault(); mazeMove(keys[e.key]); }
+    if (gameKind === 'race' && (e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); if (!e.repeat) raceTap(); }
+  });
+
+  // ---------- Start ----------
+  renderPicker(); drawHamster(); renderNeeds(); renderShelf(); renderItems(); updateHelp(); renderSound();
+  setNight(!!state.night, false);
+  placeHam(hx, hy, 0);
+  setTimeout(() => say(`Hi, I'm ${nameOf(state.ham)}!`), 600);
+  schedule(2200);
+})();
+</script>
+</body>
+</html>
